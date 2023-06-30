@@ -15,7 +15,7 @@ const parser = document.querySelector("#parser")
 // Variaveis responsaveis pela separação dos lexemas e guardar os lexemas:
 let sequencia= ''
 let qtd_aspas = 1
-var string = ''
+var string = []
 let posicaoDaString = 0
 var lexemas = []
 
@@ -126,7 +126,7 @@ function criarLexema(token, simbolo){
 
 }
 function pegarStrings(codigo){
-    let isString = /'(\s?[a-z ]{3,}[à-ú]?([:!\.,]{1,})?){1,}'/gi
+    let isString = /('(\s?[a-z ]{3,}[à-ú]?([:!\.,]{1,})?){1,}')|("(\s?[a-z ]{3,}[à-ú]?([:!\.,]{1,})?){1,}")/gi
     let string = []
     string = codigo.match(isString)
     if(string != null)
@@ -157,7 +157,7 @@ function prepararString(string){
 function identificarLexemas(sentenca){
     // expressões regulares para identificar espaços e caracteres especiais da linguagem:
     let espaco = /\s/
-    let especialChar = /[\?\(\)'\.;]/
+    let especialChar = /[\?\(\)'\.";]/
     // Percorre todo a sentenca e separa os lexemas corretamente:
     for(let i=0; i<(sentenca.length); i++){
         // caso não seja um espaço e seja um caracter especial:
@@ -220,6 +220,9 @@ function gerarTokens(simbolo){
             criarLexema('<parantese_D>', simbolo)
             break
         case "'":
+            criarLexema('<string>', simbolo)
+            break
+        case '"':
             criarLexema('<string>', simbolo)
             break
         case '.':
