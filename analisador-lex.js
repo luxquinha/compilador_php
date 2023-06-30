@@ -141,8 +141,20 @@ function lex(){
         codigo = prepararString(codigo)
         saidas.innerText = codigo
         string = pegarStrings(codigo)
+        codigo = tirarStings_doCodigo(codigo)
         identificarLexemas(codigo)
     }
+}
+function tirarStings_doCodigo(codigo){
+    string.forEach(frase =>{
+        if(frase.startsWith('"')){
+            frase = frase.replaceAll('"', '')
+        }else{
+            frase = frase.replaceAll("'", "")
+        }
+        codigo = codigo.replace(frase, '')
+    })
+    return codigo
 }
 // Prepara a String (retira os \n, \t) e retorna uma string única:
 function prepararString(string){
@@ -191,6 +203,7 @@ function gerarTokens(simbolo){
     let identificadores = /\$([a-z\_\-]{1,}[0-9]?)/i
     let int_literal = /^[0-9]{1,}/
     let float_literal = /[0-9]{1,}\.[0-9]{1,}/
+    let palavra = /[a-z ]{1,}/i
     switch (simbolo) {
         case '<php':
             criarLexema('<incio_app>', simbolo)
@@ -241,6 +254,9 @@ function gerarTokens(simbolo){
         criarLexema("<float_literal>", simbolo)
     }else if(int_literal.test(simbolo)){
         criarLexema("<int_literal>", simbolo)
+    }else if(palavra.test(simbolo) && simbolo != "<php" && simbolo != "echo"){
+        criarLexema("<indefinido>", simbolo)
+        erro(simbolo)
     }
 }
 // =====================Interações com o DOM===================================
@@ -269,4 +285,7 @@ function addTabela(){
         tbody.appendChild(tr)
     })
 
+}
+function erro(simbolo){
+    console.log(`A palavra:'${simbolo}' não está definida`);
 }
