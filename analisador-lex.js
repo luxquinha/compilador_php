@@ -14,6 +14,9 @@ const saidas = document.querySelector("#saidas")
 const parser = document.querySelector("#parser")
 // Variaveis responsaveis pela separação dos lexemas e guardar os lexemas:
 let sequencia= ''
+let qtd_aspas = 1
+var string = ''
+let posicaoDaString = 0
 var lexemas = []
 
 // =====================Eventos=======================================
@@ -101,15 +104,33 @@ class Token{
 }
 // Instancia um Token, atribui os seus valores e o adiciona no array:
 function criarLexema(token, simbolo){
-    if(token == ""){
-        alert("nenhum token enviado")
-    }else{
+    if(simbolo != "" && token != '<string>'){
         let lex = new Token()
         lex.lexema = simbolo
         lex.pos = lexemas.length
         lex.tokens = token
         lexemas.push(lex)
-    }
+    }else if(token == '<string>'){
+        if((qtd_aspas%2)!=0){
+            let frase = new Token()
+            frase.lexema = string[posicaoDaString] 
+            frase.pos = lexemas.length
+            frase.tokens = '<string>'
+            lexemas.push(frase)
+            qtd_aspas++
+        }else{
+            qtd_aspas++
+            posicaoDaString++
+        }
+    } 
+
+}
+function pegarStrings(codigo){
+    let isString = /'(\s?[a-z ]{3,}[à-ú]?([:!\.,]{1,})?){1,}'/gi
+    let string = []
+    string = codigo.match(isString)
+    if(string != null)
+        return string
 }
 // recebe o codigo digitado, transforma em string e guarda os lexemas do código em um array:
 function lex(){
@@ -119,6 +140,7 @@ function lex(){
         let codigo = textArea.value
         codigo = prepararString(codigo)
         saidas.innerText = codigo
+        string = pegarStrings(codigo)
         identificarLexemas(codigo)
     }
 }
@@ -140,21 +162,22 @@ function identificarLexemas(sentenca){
     for(let i=0; i<(sentenca.length); i++){
         // caso não seja um espaço e seja um caracter especial:
         if(!espaco.test(sentenca[i]) && especialChar.test(sentenca[i])){
+            // Caso seja um numero do tipo float ele verifica se o proximo caractere é um número, se sim ele so adiciona a sequencia
+            if(sentenca[i] == "." && !isNaN(sentenca[i+1])){
+                sequencia= sequencia+sentenca[i]
+                continue
             /* se já houver um valor em sequencia ele imprime e reseta a variavel, em seguida verifica qual o simbolo 
             (quando não houver espaços entre o lexema e um simbolo reservado da palavra)*/
-            if(sequencia != '' && especialChar.test(sentenca[i])){
-                // console.log(sequencia);
+            }else if(sequencia != '' && especialChar.test(sentenca[i])){
                 gerarTokens(sequencia)
                 sequencia = ''
             }
-            // verificarSimbolo(sentenca[i])
             gerarTokens(sentenca[i])
             //No caso de não ser nenhum dos RegExp acima a variavel sequencia é concatenada com o caractere verificado
         }else if(!espaco.test(sentenca[i]) && !especialChar.test(sentenca[i])){
             sequencia= sequencia+sentenca[i]
             // Verifica o proximo caractere para saber se é um espaço, se sim ele imprime a sequencia guardada 
             if(sequencia != '' && espaco.test(sentenca[i+1])){
-                // console.log(sequencia);
                 gerarTokens(sequencia)
                 }
         // Caso seja um espaço a variavel sequencia é resetada e passa para o próximo caractere da sentença:
@@ -166,7 +189,8 @@ function identificarLexemas(sentenca){
 }
 function gerarTokens(simbolo){
     let identificadores = /\$([a-z\_\-]{1,}[0-9]?)/i
-    let numeroLiteral = /^[0-9]{1,}/
+    let int_literal = /^[0-9]{1,}/
+    let float_literal = /[0-9]{1,}\.[0-9]{1,}/
     switch (simbolo) {
         case '<php':
             criarLexema('<incio_app>', simbolo)
@@ -196,7 +220,7 @@ function gerarTokens(simbolo){
             criarLexema('<parantese_D>', simbolo)
             break
         case "'":
-            criarLexema('<inicio/fim_string>', simbolo)
+            criarLexema('<string>', simbolo)
             break
         case '.':
             criarLexema('<concat_variavel>', simbolo)
@@ -210,17 +234,12 @@ function gerarTokens(simbolo){
     }
     if(identificadores.test(simbolo)){
         criarLexema("<identificador>", simbolo)
-    }else if(numeroLiteral.test(simbolo)){
-        criarLexema("<num_literal>", simbolo)
+    }else if(float_literal.test(simbolo)){
+        criarLexema("<float_literal>", simbolo)
+    }else if(int_literal.test(simbolo)){
+        criarLexema("<int_literal>", simbolo)
     }
 }
-// function pegarString(codigo){
-//     let isString = /'(\s?[a-z ]{3,}[à-ú]?([:!\.,]{1,})?){1,}'/gi
-//     let string = []
-//     string = codigo.match(isString)
-//     if(string != null)
-//         return string
-// }
 // =====================Interações com o DOM===================================
 // Adiciona linhas e colunas na pagina3 da aplicação:
 function addTabela(){
