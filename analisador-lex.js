@@ -256,7 +256,8 @@ function gerarTokens(simbolo){
         criarLexema("<int_literal>", simbolo)
     }else if(palavra.test(simbolo) && simbolo != "<php" && simbolo != "echo"){
         criarLexema("<indefinido>", simbolo)
-        erro(simbolo)
+        let erroEspecifico = `A palavra:'${simbolo}' não está definida`
+        erro(erroEspecifico)
     }
 }
 // =====================Interações com o DOM===================================
@@ -286,6 +287,6 @@ function addTabela(){
     })
 
 }
-function erro(simbolo){
-    console.log(`A palavra:'${simbolo}' não está definida`);
+function erro(tipoError){
+    console.log(tipoError);
 }
