@@ -95,6 +95,9 @@ function reiniciarVariaveisGlobais(){
     posicaoDaString = 0
     qtd_aspas = 1
     sequencia = ''
+    linhaAtual = 1
+    linhaTemosPos = 0 
+    idExpr = 1
 }
 // =====================Funções dos menus===================================
 function mostrarCompilador(){
@@ -325,19 +328,20 @@ function erro(tipoError){
 /* Gramática:
     <php ?> -> <expr>; { expr;}
 
-    <atribuição> -> id "=" <expr>
+    <atribuição> -> id "=" <termo>
 
-    <imprimir> -> echo "("<expr>");" 
+    <imprimir> -> echo "("<termo>");" 
 
     <expr> -> <atribuição>";" 
     | <imprimir> 
     | <termo> {(+|-)<termo>} 
-    | <string>
 
     <termo> -> <fator> {(*|/)<termo>}
+    | <string>
 
     <fator> -> id 
     | num_literal
+    | (<expr>)
 
     <string> -> id [.<expr>]
 */
@@ -345,13 +349,14 @@ function erro(tipoError){
 function addLinha(conteudoDaLinha){
     const linha = {
         linha: (linhas.length+1),
-        conteudo: conteudoDaLinha
+        conteudo: conteudoDaLinha,
+        quantidadeTermos: conteudoDaLinha.length
     }
     return linha
 }
-// Retorna o lexema de acordo com a posição desejada:
-function getLexema(pos){
-    return lexemas[pos]
+// Retorna o token de acordo com a posição desejada:
+function getToken(linha, pos){
+    return linhas[linha].conteudo[pos]
 }
 // analisa cada linha do código, tendo o ";" como parâmetro de parada da linha: 
 function separarLinhas(){
@@ -374,22 +379,138 @@ function separarLinhas(){
     }else if(linhas[0].conteudo.token !== "<inicio_app>"){
         erro(`Esperado "<php" para iniciar o programa`)
     }
-    console.log(linhas)
+    expr()
 }
 /*Funções responsáveis por saber quantas linhas e quais o conteúdos de cada linha - (Fim) */
 // Vai analisar como a expressão se parece e fazer chamadas para as funçãos respectivas da expressão:
+let linhaAtual = 1
+let linhaTemosPos = 0 
+let idExpr = 1
+function proximoSimbolo(termoPos, linhasPos){
+    return (linhas[linhasPos].conteudo[(termoPos+1)] != null) ? linhas[linhasPos].conteudo[(termoPos+1)] : linhas[linhasPos].conteudo[(termoPos-2)]
+}
 function expr(){
-
+    // Cada linha é uma expressão diferente
+    if(linhaTemosPos == 0){
+        console.log(`<expr${idExpr}> Raiz 2°`);
+    }
+    // expr -> <termo> {(+|-)<termo>}
+    if(proximoSimbolo(linhaTemosPos, linhaAtual).lexema == '+'
+    || proximoSimbolo(linhaTemosPos, linhaAtual).lexema == '-'){
+        if(linhaTemosPos != 0){
+            console.log(`<expr> Raiz 4°`);
+        }
+        // chama a função termo() enviando o token analisado como parametro:
+        termo(getToken(linhaAtual, linhaTemosPos))
+    }
+    // expr -> <atribuição>
+    else if(proximoSimbolo(linhaTemosPos, linhaAtual).lexema == "="){
+        if(linhaTemosPos != 0){
+            console.log(`<expr>`);
+        }
+        // chama a função atribuição() enviando o token analisado como parametro:
+        atribuição(getToken(linhaAtual, linhaTemosPos))
+    }
+    // expr -> <imprimir> ou expr -> <id> {(*|/)(expr)}
+    else if(proximoSimbolo(linhaTemosPos, linhaAtual).lexema == '(' || getToken(linhaAtual, linhaTemosPos).lexema == "("){
+        if(proximoSimbolo(linhaTemosPos+1, linhaAtual).token == "<string>"){
+            if(linhaTemosPos != 0){
+                console.log(`<expr> Raiz 4°`);
+            }
+            // chama a função imprimir() enviando o token analisado como parametro:
+            imprimir(getToken(linhaAtual, linhaTemosPos))
+        }else{
+            let tamanho = linhas[linhaAtual].quantidadeTermos
+            if(linhas[linhaAtual].conteudo[(tamanho-2)].lexema == ")"){
+                if(linhaTemosPos != 0){
+                    console.log(`(<expr>) Raiz 5°`);
+                }
+                linhaTemosPos++
+                termo(getToken(linhaAtual, linhaTemosPos))
+            }else{
+                erro(`Esperado ")" na linha ${linhaAtual}`)
+            }
+        }
+    } 
+    else if(proximoSimbolo(linhaTemosPos, linhaAtual).lexema == "*"
+    || proximoSimbolo(linhaTemosPos, linhaAtual).lexema == "/"){
+        if(linhaTemosPos != 0){
+            console.log(`<expr> Raiz 4°`);
+        }
+        fator(getToken(linhaAtual, linhaTemosPos))
+    }
+    // Caso seja o fim da linha ele incrementa a linhaAtual e reseta a linhaTemosPos:
+    else if(proximoSimbolo(linhaTemosPos, linhaAtual).lexema == ";"){
+        if(linhaTemosPos != 0){
+            console.log(`<expr> Raiz 4°`);
+        }
+        termo(getToken(linhaAtual, linhaTemosPos))
+        proximaLinha()
+    }
+}
+function proximaLinha(){
+    linhaAtual++
+    linhaTemosPos = 0
+    if(linhaAtual<(linhas.length-1)){
+        idExpr++
+        expr()
+    }
 }
 // Analisar a aparencia do termo e chamar a função que casar com a sequencia correta:
-function termo(){
-
+function termo(token){
+    if(token != null){
+        console.log(`<termo>`);
+        // Exceção da string:
+        if(token.token != "<string>"){
+            // Chama fator que incrementa para o proximo termo:
+            fator(token)
+        }else{
+            string(token)
+        }
+    }
+}
+//Verifica o paratenses direito e chama a função termo:
+function imprimir(token){
+    console.log(`A função termo recebeu ${token.lexema}`);
+}
+// Verifica o id recebido e chama o valor da expressão atribuido a ele:
+function atribuição(token){
+    console.log(`<atribuição> Raiz 3°`);
+    console.log(`${token.token} = ${token.lexema}`);
+    console.log(`${proximoSimbolo(linhaTemosPos, linhaAtual).token} VÉRTICE`);
+    linhaTemosPos+=2
+    expr()
 }
 // Analisar a aparencia do fator e chamar a função que casar com a sequencia correta ou gerar um valores terminais:
-function fator(){
-
+function fator(token){
+    console.log(`<fator>`);
+    console.log(`${token.token} = ${token.lexema}`);
+    if(proximoSimbolo(linhaTemosPos, linhaAtual).token != "<parantese_D>"
+    && proximoSimbolo(linhaTemosPos, linhaAtual).token != "<ponto_e_virgula>"){
+        console.log(`${proximoSimbolo(linhaTemosPos, linhaAtual).token} VÉRTICE`);
+    }else if(proximoSimbolo(linhaTemosPos, linhaAtual).token == "<parantese_D>"){
+        console.log(proximoSimbolo(linhaTemosPos+1, linhaAtual).token);
+    }else{
+        console.log(`${proximoSimbolo(linhaTemosPos, linhaAtual).token}`);
+    }
+    if(proximoSimbolo(linhaTemosPos, linhaAtual).lexema== "+"
+    || proximoSimbolo(linhaTemosPos, linhaAtual).lexema == '-'){
+        linhaTemosPos+=2
+        termo(getToken(linhaAtual, linhaTemosPos))
+    }else if(proximoSimbolo(linhaTemosPos, linhaAtual).lexema== "*"
+    || proximoSimbolo(linhaTemosPos, linhaAtual).lexema == '/'){
+        linhaTemosPos+=2
+        if(getToken(linhaAtual, linhaTemosPos).lexema == "("){
+            expr()
+        }else{
+            fator(getToken(linhaAtual, linhaTemosPos))
+        }
+    }else{
+        proximaLinha()
+    }
 }
 // Analisar a aparencia do string e chamar a função que casar com a sequencia correta ou gerar a frase terminal:
 function string(){
-
+    console.log(`Função string`);
+    linhaTemosPos+=2
 }
