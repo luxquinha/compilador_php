@@ -50,7 +50,7 @@
     width: 98vw;
 }
 #coluna1{
-    width: 40%;
+    width: 29%;
     min-height: 87.3vh;
     background-color: #6D7993;
     display: flex;
@@ -59,7 +59,7 @@
 #coluna2{
     display: flex;
     justify-content: center;
-    width: 59%;
+    width: 70%;
     min-height: 90%;
     position: relative;
     margin-bottom: 10px;
@@ -157,4 +157,64 @@
 }
 #paginaAtual{
     background-color: #ffc107;
+}
+/* Colorações das raizes: */
+.raiz1{
+    color: blue;
+    font-weight: 700;
+    width: 100%;
+    text-align: center;
+}
+.raiz2{
+    color: rgb(170, 170, 2);
+    font-weight: 700;
+}
+.raiz3{
+    color: rgb(235, 155, 7);
+    font-weight: 700;
+}
+.raiz4{
+    color: rgb(213, 19, 19);
+    font-weight: 700;
+}
+.raiz5{
+    color: rebeccapurple;
+    font-weight: 700;
+}
+.ladoEsquerdo{
+    color: red;
+    font-weight: 700;
+}
+.ladoDireito{
+    color: green;
+    font-weight: 700;
+}
+.vertice{
+    color: #ab0050;
+    font-weight: 400;
+    text-align: center;
+}
+.caminhos{
+    border: 1px dashed black;
+    margin-bottom: 15px;
+    font-weight: 700;
+    border-radius: 15px;
+    min-width: 10rem;
+    height: 2.2rem;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background-color: rgba(255, 255, 255, 0.7);
+}
+.colum{
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    width: 100%;
+}
+.inRow{
+    display: flex;
+    flex-direction: row;
+    align-items: flex-start;
+    width: 100%;
 }

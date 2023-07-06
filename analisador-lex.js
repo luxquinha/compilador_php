@@ -80,6 +80,7 @@ executar.addEventListener('click', ()=>{
     if(textArea.value !== ''){
         reiniciarVariaveisGlobais()
         addTabela("limparTabela")
+        mostrarArvoreParse(null, 'limparArvore')
     }
     lex()
 })
@@ -98,6 +99,8 @@ function reiniciarVariaveisGlobais(){
     linhaAtual = 1
     linhaTemosPos = 0 
     idExpr = 1
+    caminhoExpLinha = []
+    arvore = ['<progr>']
 }
 // =====================Funções dos menus===================================
 function mostrarCompilador(){
@@ -166,6 +169,8 @@ function lex(){
         codigo = tirarStings_doCodigo(codigo)
         identificarLexemas(codigo)
         separarLinhas()
+        console.log(arvore)
+        mostrarArvoreParse(arvore, '')
     }
 }
 function tirarStings_doCodigo(codigo){
@@ -245,7 +250,7 @@ function gerarTokens(simbolo){
         case '-':
             criarLexema('<op_subtração>', simbolo)
             break
-        case '\\':
+        case '/':
             criarLexema('<op_divide>', simbolo)
             break
         case '*':
@@ -264,17 +269,17 @@ function gerarTokens(simbolo){
             criarLexema('<string>', simbolo)
             break
         case '.':
-            criarLexema('<concat_variavel>', simbolo)
+            criarLexema('<op_concat>', simbolo)
             break
         case ';':
             criarLexema('<ponto_e_virgula>', simbolo)
             break
         case 'echo':
-            criarLexema('<imprimir>', simbolo)
+            criarLexema('<op_imprimir>', simbolo)
             break
     }
     if(identificadores.test(simbolo)){
-        criarLexema("<identificador>", simbolo)
+        criarLexema("<id>", simbolo)
     }else if(float_literal.test(simbolo)){
         criarLexema("<float_literal>", simbolo)
     }else if(int_literal.test(simbolo)){
@@ -330,20 +335,20 @@ function erro(tipoError){
 
     <atribuição> -> id "=" <termo>
 
-    <imprimir> -> echo "("<termo>");" 
+    <imprimir> -> echo "(<imprimir>)" (<termo>) 
 
-    <expr> -> <atribuição>";" 
+    <expr> -> <atribuição> 
     | <imprimir> 
     | <termo> {(+|-)<termo>} 
+    | <fator> * (<expr>)
 
     <termo> -> <fator> {(*|/)<termo>}
     | <string>
 
-    <fator> -> id 
-    | num_literal
+    <fator> -> id [. <termo>]
     | (<expr>)
 
-    <string> -> id [.<expr>]
+    <string> -> id [.<termo>]
 */
 /*Funções responsáveis por saber quantas linhas e quais o conteúdos de cada linha - (inicio) */
 function addLinha(conteudoDaLinha){
@@ -378,27 +383,30 @@ function separarLinhas(){
         erro(`Esperado "?>" para finalizar o programa`)
     }else if(linhas[0].conteudo.token !== "<inicio_app>"){
         erro(`Esperado "<php" para iniciar o programa`)
+    }else{
+        expr()
     }
-    expr()
 }
 /*Funções responsáveis por saber quantas linhas e quais o conteúdos de cada linha - (Fim) */
 // Vai analisar como a expressão se parece e fazer chamadas para as funçãos respectivas da expressão:
 let linhaAtual = 1
 let linhaTemosPos = 0 
 let idExpr = 1
+let caminhoExpLinha = []
+let arvore = ['<progr>']
 function proximoSimbolo(termoPos, linhasPos){
     return (linhas[linhasPos].conteudo[(termoPos+1)] != null) ? linhas[linhasPos].conteudo[(termoPos+1)] : linhas[linhasPos].conteudo[(termoPos-2)]
 }
 function expr(){
     // Cada linha é uma expressão diferente
     if(linhaTemosPos == 0){
-        console.log(`<expr${idExpr}> Raiz 2°`);
+        caminhoExpLinha.push(`<expr${idExpr}>`)
     }
     // expr -> <termo> {(+|-)<termo>}
     if(proximoSimbolo(linhaTemosPos, linhaAtual).lexema == '+'
     || proximoSimbolo(linhaTemosPos, linhaAtual).lexema == '-'){
         if(linhaTemosPos != 0){
-            console.log(`<expr> Raiz 4°`);
+            caminhoExpLinha.push(`<expr>`)
         }
         // chama a função termo() enviando o token analisado como parametro:
         termo(getToken(linhaAtual, linhaTemosPos))
@@ -406,7 +414,7 @@ function expr(){
     // expr -> <atribuição>
     else if(proximoSimbolo(linhaTemosPos, linhaAtual).lexema == "="){
         if(linhaTemosPos != 0){
-            console.log(`<expr>`);
+            caminhoExpLinha.push(`<expr>`)
         }
         // chama a função atribuição() enviando o token analisado como parametro:
         atribuição(getToken(linhaAtual, linhaTemosPos))
@@ -415,7 +423,7 @@ function expr(){
     else if(proximoSimbolo(linhaTemosPos, linhaAtual).lexema == '(' || getToken(linhaAtual, linhaTemosPos).lexema == "("){
         if(proximoSimbolo(linhaTemosPos+1, linhaAtual).token == "<string>"){
             if(linhaTemosPos != 0){
-                console.log(`<expr> Raiz 4°`);
+                caminhoExpLinha.push(`<expr>`)
             }
             // chama a função imprimir() enviando o token analisado como parametro:
             imprimir(getToken(linhaAtual, linhaTemosPos))
@@ -423,7 +431,7 @@ function expr(){
             let tamanho = linhas[linhaAtual].quantidadeTermos
             if(linhas[linhaAtual].conteudo[(tamanho-2)].lexema == ")"){
                 if(linhaTemosPos != 0){
-                    console.log(`(<expr>) Raiz 5°`);
+                    caminhoExpLinha.push(`(<expr>)`)
                 }
                 linhaTemosPos++
                 termo(getToken(linhaAtual, linhaTemosPos))
@@ -435,14 +443,14 @@ function expr(){
     else if(proximoSimbolo(linhaTemosPos, linhaAtual).lexema == "*"
     || proximoSimbolo(linhaTemosPos, linhaAtual).lexema == "/"){
         if(linhaTemosPos != 0){
-            console.log(`<expr> Raiz 4°`);
+            caminhoExpLinha.push(`<expr>`)
         }
         fator(getToken(linhaAtual, linhaTemosPos))
     }
     // Caso seja o fim da linha ele incrementa a linhaAtual e reseta a linhaTemosPos:
     else if(proximoSimbolo(linhaTemosPos, linhaAtual).lexema == ";"){
         if(linhaTemosPos != 0){
-            console.log(`<expr> Raiz 4°`);
+            caminhoExpLinha.push(`<expr>`)
         }
         termo(getToken(linhaAtual, linhaTemosPos))
         proximaLinha()
@@ -451,66 +459,193 @@ function expr(){
 function proximaLinha(){
     linhaAtual++
     linhaTemosPos = 0
+    if(caminhoExpLinha.length > 0){
+        arvoreParse(caminhoExpLinha)
+        caminhoExpLinha = []
+    }
     if(linhaAtual<(linhas.length-1)){
         idExpr++
         expr()
     }
 }
+// Analisar a aparencia do string e chamar a função que casar com a sequencia correta ou gerar a frase terminal:
+function String(token){
+    caminhoExpLinha.push(`<string>`)
+    caminhoExpLinha.push(`<Id> = ${token.lexema}`)
+    if(proximoSimbolo(linhaTemosPos, linhaAtual).lexema == "."){
+        caminhoExpLinha.push(`${proximoSimbolo(linhaTemosPos, linhaAtual).token}`)
+        linhaTemosPos+=2
+        termo(getToken(linhaAtual, linhaTemosPos))
+    }else if(proximoSimbolo(linhaTemosPos, linhaAtual).lexema == ")"){
+        caminhoExpLinha.push(`${proximoSimbolo(linhaTemosPos+1, linhaAtual).token}`)
+        proximaLinha()
+    }else{
+        caminhoExpLinha.push(`${proximoSimbolo(linhaTemosPos, linhaAtual).token}`)
+
+    }
+}
 // Analisar a aparencia do termo e chamar a função que casar com a sequencia correta:
 function termo(token){
     if(token != null){
-        console.log(`<termo>`);
         // Exceção da string:
         if(token.token != "<string>"){
+            caminhoExpLinha.push(`<termo>`)
             // Chama fator que incrementa para o proximo termo:
             fator(token)
         }else{
-            string(token)
+            caminhoExpLinha.push(`(<termo>)`)
+            String(token)
         }
     }
 }
 //Verifica o paratenses direito e chama a função termo:
 function imprimir(token){
-    console.log(`A função termo recebeu ${token.lexema}`);
+    caminhoExpLinha.push(`<impressão>`)
+    caminhoExpLinha.push(`<Id> = ${token.lexema}`)
+    caminhoExpLinha.push(`${token.token}`)
+
+    if(proximoSimbolo(linhaTemosPos, linhaAtual).token == "<parantese_E>"){
+        // Verificar os parenteses e chamar o termo que está dentro da função echo:
+        let tamanho = linhas[linhaAtual].quantidadeTermos
+        if(linhas[linhaAtual].conteudo[(tamanho-2)].lexema == ")"){
+            linhaTemosPos+=2
+            termo(getToken(linhaAtual, linhaTemosPos))
+        }else{
+            erro(`Esperado ")" na linha ${linhaAtual}`)
+        }
+    }
 }
 // Verifica o id recebido e chama o valor da expressão atribuido a ele:
 function atribuição(token){
-    console.log(`<atribuição> Raiz 3°`);
-    console.log(`${token.token} = ${token.lexema}`);
-    console.log(`${proximoSimbolo(linhaTemosPos, linhaAtual).token} VÉRTICE`);
+    caminhoExpLinha.push(`<atribuição>`)
+    caminhoExpLinha.push(`${token.token} = ${token.lexema}`)
+    caminhoExpLinha.push(`${proximoSimbolo(linhaTemosPos, linhaAtual).token}`)
     linhaTemosPos+=2
     expr()
 }
 // Analisar a aparencia do fator e chamar a função que casar com a sequencia correta ou gerar um valores terminais:
 function fator(token){
-    console.log(`<fator>`);
-    console.log(`${token.token} = ${token.lexema}`);
+    caminhoExpLinha.push(`<fator>`)
+    caminhoExpLinha.push(`${token.token} = ${token.lexema}`)
+
+    // imprimindo os vértices corretos e os finais de cada expressão:
     if(proximoSimbolo(linhaTemosPos, linhaAtual).token != "<parantese_D>"
     && proximoSimbolo(linhaTemosPos, linhaAtual).token != "<ponto_e_virgula>"){
-        console.log(`${proximoSimbolo(linhaTemosPos, linhaAtual).token} VÉRTICE`);
+        caminhoExpLinha.push(`${proximoSimbolo(linhaTemosPos, linhaAtual).token}`)
     }else if(proximoSimbolo(linhaTemosPos, linhaAtual).token == "<parantese_D>"){
-        console.log(proximoSimbolo(linhaTemosPos+1, linhaAtual).token);
-    }else{
-        console.log(`${proximoSimbolo(linhaTemosPos, linhaAtual).token}`);
-    }
-    if(proximoSimbolo(linhaTemosPos, linhaAtual).lexema== "+"
-    || proximoSimbolo(linhaTemosPos, linhaAtual).lexema == '-'){
-        linhaTemosPos+=2
-        termo(getToken(linhaAtual, linhaTemosPos))
-    }else if(proximoSimbolo(linhaTemosPos, linhaAtual).lexema== "*"
-    || proximoSimbolo(linhaTemosPos, linhaAtual).lexema == '/'){
-        linhaTemosPos+=2
-        if(getToken(linhaAtual, linhaTemosPos).lexema == "("){
+        caminhoExpLinha.push(`${proximoSimbolo(linhaTemosPos+1, linhaAtual).token}`)
+        if(proximoSimbolo(linhaTemosPos+1, linhaAtual).lexema != ';'){
+            linhaTemosPos+=3
             expr()
-        }else{
-            fator(getToken(linhaAtual, linhaTemosPos))
         }
     }else{
-        proximaLinha()
+        caminhoExpLinha.push(`${proximoSimbolo(linhaTemosPos, linhaAtual).token}`)
+    }
+    // Verifica se há algum símbolo diferente de ';' após o fator analisado:
+    if(proximoSimbolo(linhaTemosPos,linhaAtual)!= null){
+        if(proximoSimbolo(linhaTemosPos, linhaAtual).lexema== "+"
+        || proximoSimbolo(linhaTemosPos, linhaAtual).lexema == '-'){
+            linhaTemosPos+=2
+            termo(getToken(linhaAtual, linhaTemosPos))
+        }else if(proximoSimbolo(linhaTemosPos, linhaAtual).lexema== "*"
+        || proximoSimbolo(linhaTemosPos, linhaAtual).lexema == '/'){
+            linhaTemosPos+=2
+            if(getToken(linhaAtual, linhaTemosPos).lexema == "("){
+                expr()
+            }else{
+                fator(getToken(linhaAtual, linhaTemosPos))
+            }
+        }else if(proximoSimbolo(linhaTemosPos, linhaAtual).lexema == '.'){
+            linhaTemosPos+=2
+            termo(getToken(linhaAtual, linhaTemosPos))
+        }
+        else{
+            proximaLinha()
+        }
     }
 }
-// Analisar a aparencia do string e chamar a função que casar com a sequencia correta ou gerar a frase terminal:
-function string(){
-    console.log(`Função string`);
-    linhaTemosPos+=2
+function arvoreParse(subArvore){
+    if(subArvore != null){
+        arvore.push(subArvore)
+    }else{
+        erro(`Problema na função ArvoreParse`)
+    }
+}
+function mostrarArvoreParse(arvoreParseConteudo, arg){
+    if(arg == "limparArvore"){
+        parser.removeChild(corpoArvoreParser)
+    }
+    else{
+        let raizSegundoGrau = /<[a-z]{1,}[0-9]>/
+        let vertice = /((op_)[a-z]{1,})/gi
+        let posicaoArvore = 0
+        if(arvoreParseConteudo != null){
+            const divPrincipal = document.createElement('div')
+            const divSecundaria = document.createElement('div')
+            divPrincipal.id = 'corpoArvoreParser'
+            divPrincipal.className = 'colum'
+            divSecundaria.className = 'inRow'
+            arvoreParseConteudo.map(subArvore =>{
+                const divTerciaria = document.createElement('div')
+                divTerciaria.className = 'colum'
+                if(subArvore == "<progr>"){
+                    const span = document.createElement('span')
+                    span.innerText = subArvore
+                    span.className = 'raiz1 caminhos'
+                    divPrincipal.appendChild(span)
+                    // divPrincipal.appendChild(divSecundaria)
+                }else{
+                    for(let i=0; i<subArvore.length;i++){
+                        const span = document.createElement('span')
+                        if(raizSegundoGrau.test(subArvore[i])){
+                            span.innerText = subArvore[i]
+                            span.className = 'raiz2 caminhos'
+                            // div2.appendChild(span)
+                        }else if(subArvore[i] == "<atribuição>" || subArvore[i] == "<impressão>"){
+                            span.innerText = subArvore[i]
+                            span.className = 'raiz3 caminhos'
+                            // div3.appendChild(span)
+                        }else if((subArvore[i] == "<expr>" || subArvore[i] == "(<termo>)") && eRaiz(arvore[posicaoArvore], i)){
+                            span.innerText = subArvore[i]
+                            span.className = 'raiz4 caminhos'
+                        }else if(subArvore[i] == "(<expr>)"){
+                            span.innerText = subArvore[i]
+                            span.className = 'raiz5 caminhos'
+                        }else if(vertice.test(subArvore[i])){
+                            span.innerText = subArvore[i]
+                            span.className = 'vertice caminhos'
+                        }else{
+                            span.innerText = subArvore[i]
+                            span.className = 'caminhos'
+                        }
+                        divTerciaria.appendChild(span)
+                    }
+                    divSecundaria.appendChild(divTerciaria)
+                }
+                posicaoArvore++
+            })
+            divPrincipal.appendChild(divSecundaria)
+            parser.appendChild(divPrincipal)
+        }
+    }
+}
+// function estruturarArvore(arvore){
+
+// }
+// function criarNode(){
+//     let raiz = {
+//         valor: '',
+//         ladoEsquerdo: null,
+//         vertice: null,
+//         ladoDireito: null
+//     }
+// }
+function eRaiz(subArvore, posSubArv){
+    let vertice = /((op_)[a-z]{1,})/gi
+    for(let i=posSubArv; i<subArvore.length; i++){
+        if(vertice.test(subArvore[i])){
+            return true
+        }
+    }
+    return false
 }
