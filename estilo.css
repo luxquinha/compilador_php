@@ -168,54 +168,43 @@
     width: 100%;
 }
 /* Colorações das raizes: */
+.caminhos{
+    color: #3E4C59;
+    border: 1px dashed black;
+    margin-bottom: 8px;
+    font-weight: 700;
+    border-radius: 15px;
+    min-width: 7rem;
+    height: 2.5rem;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background-color: rgba(255, 255, 255, 0.7);
+}
 .raiz1{
     color: blue;
-    font-weight: 700;
     width: 100%;
     text-align: center;
 }
 .raiz2{
     color: rgb(170, 170, 2);
-    font-weight: 700;
     width: 85%;
 }
 .raiz3{
     color: rgb(235, 155, 7);
-    font-weight: 700;
     width: 100%;
 }
 .raiz4{
-    color: rgb(213, 19, 19);
-    font-weight: 700;
+    color: rgb(242, 45, 45);
+    width: 100%;
 }
 .raiz5{
-    color: rebeccapurple;
-    font-weight: 700;
-}
-.ladoEsquerdo{
-    color: red;
-    font-weight: 700;
-}
-.ladoDireito{
-    color: green;
+    color: rgb(132, 58, 206);
     font-weight: 700;
 }
 .vertice{
-    color: #ab0050;
-    font-weight: 400;
+    color: #e10b6f;
     text-align: center;
-}
-.caminhos{
-    border: 1px dashed black;
-    margin-bottom: 8px;
-    font-weight: 700;
-    border-radius: 15px;
-    min-width: 8.5rem;
-    height: 2.2rem;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    background-color: rgba(255, 255, 255, 0.7);
 }
 .columPrincipal{
     display: flex;
