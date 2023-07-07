@@ -1,5 +1,5 @@
 import { erro } from "../main.js"
-
+import { gerarCodigo } from "./gerador_de_codigo.js"
 // Variaveis globais do analisador sintático:
 var linhaAtual = 1
 var linhaTemosPos = 0 
@@ -81,6 +81,7 @@ export function separarLinhas(lexemasDoCodigo){
     }else{
         expr()
         mostrarArvoreParse(arvore, '')
+        gerarCodigo(arvore)
     }
 }
 /*Funções responsáveis por saber quantas linhas e quais o conteúdos de cada linha - (Fim) */
@@ -445,7 +446,7 @@ function estruturaTerminal(subArvore, pos){
     return div
 }
 // Verifica se o valor recebido é um vértice ou não e retorna um boolean:
-function eVertice(valor){
+export function eVertice(valor){
     let vertice = /((op_)[a-z]{1,})/i
     if(vertice.test(valor) && isNaN(valor))
         return true

@@ -1,5 +1,6 @@
-import lex, { limparVariaveisGlobaisLex } from "./modulos.js/analisador-lex.js"
+import { lex, limparVariaveisGlobaisLex } from "./modulos.js/analisador-lex.js"
 import {mostrarArvoreParse , limparVariaveisGlobaissintatico} from "./modulos.js/analisador-sintatico.js"
+import { limparVariaveisGlobaisGerador } from "./modulos.js/gerador_de_codigo.js"
 // =====================Instâncias do DOM=======================================
 // código ou arquivo do usuário:
 const textArea = document.querySelector("#codigo")
@@ -12,7 +13,7 @@ const pag3 = document.querySelector("#tabela")
 const titulo = document.querySelector("#titulo_da_pagina")
 // Possiveis saidas pro usuário:
 const tokens = document.querySelector("#tabelaSimbolos")
-const saidas = document.querySelector("#saidas")
+export const saidas = document.querySelector("#saidas")
 const parser = document.querySelector("#parser")
 const executar = document.querySelector("#btn-run")
 const limpar = document.querySelector("#clear")
@@ -88,6 +89,7 @@ function clearCode(){
 function reiniciarVariaveisGlobais(){
     limparVariaveisGlobaisLex()
     limparVariaveisGlobaissintatico()
+    limparVariaveisGlobaisGerador()
 }
 // =====================Funções dos menus===================================
 function mostrarCompilador(){

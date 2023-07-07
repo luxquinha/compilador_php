@@ -53,13 +53,13 @@ function pegarStrings(codigo){
         return string
 }
 // recebe o codigo digitado, transforma em string e guarda os lexemas do código em um array:
-export default function lex(textArea){
+export function lex(textArea){
     if(textArea == ""){
         alert("Nenhum código encontrado. Por favor verifique seu editor!")
     }else{
         let codigo = textArea
         codigo = prepararString(codigo)
-        saidas.innerText = codigo
+        // saidas.innerText = codigo
         string = pegarStrings(codigo)
         codigo = tirarStings_doCodigo(codigo)
         identificarLexemas(codigo)
