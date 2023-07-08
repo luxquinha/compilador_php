@@ -78,7 +78,7 @@ function pegarId(nomeDoId){
     })
     return valor
 }
-function eNumero(valor){
+export function eNumero(valor){
     let numero = /(^[0-9][.]?)/
     if(numero.test(valor) && !eId(valor)){
         return true
@@ -86,7 +86,7 @@ function eNumero(valor){
         return false
     }
 }
-function eId(valor){
+export function eId(valor){
     let identificadores = /(\$[a-z\_\-]{1,}[0-9]?)/i
     let existe = false
     if(identificadores.test(valor)){

@@ -171,10 +171,11 @@
 .caminhos{
     color: #3E4C59;
     border: 1px dashed black;
+    margin: 3px;
     margin-bottom: 8px;
     font-weight: 700;
     border-radius: 15px;
-    min-width: 7rem;
+    min-width: 5.5rem;
     height: 2.5rem;
     display: flex;
     justify-content: center;
@@ -188,7 +189,7 @@
 }
 .raiz2{
     color: rgb(170, 170, 2);
-    width: 95%;
+    width: 100%;
 }
 .raiz3{
     color: rgb(235, 155, 7);
@@ -201,6 +202,7 @@
 .raiz5{
     color: rgb(132, 58, 206);
     font-weight: 700;
+    width: 98%;
 }
 .vertice{
     color: #e10b6f;
@@ -216,14 +218,12 @@
 .colum{
     display: flex;
     flex-direction: column;
-    /* width: 100%; */
-    /* margin: 5px; */
     align-items: center;
+    justify-content: center;
 }
 .inRow{
     display: flex;
     flex-direction: row;
-    /* flex-wrap: wrap; */
     align-items: flex-start;
     width: 100%;
     justify-content: space-between;

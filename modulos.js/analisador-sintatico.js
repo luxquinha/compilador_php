@@ -1,5 +1,6 @@
 import { erro } from "../main.js"
-import { gerarCodigo } from "./gerador_de_codigo.js"
+import { gerarCodigo, eNumero, eId } from "./gerador_de_codigo.js"
+
 // Variaveis globais do analisador sintático:
 var linhaAtual = 1
 var linhaTemosPos = 0 
@@ -8,7 +9,7 @@ var caminhoExpLinha = []
 var arvore = ['<progr>']
 var linhas = []
 var termos = []
-let proximaExp = 1
+let proximaExp = 0
 let expDupla = 2
 export function limparVariaveisGlobaissintatico(){
     linhaAtual = 1
@@ -18,7 +19,7 @@ export function limparVariaveisGlobaissintatico(){
     arvore = ['<progr>']
     linhas = []
     termos = []
-    proximaExp = 1
+    proximaExp = 0
     expDupla = 2
 }
 // =====================Análise sintática:===================================
@@ -92,16 +93,6 @@ export function separarLinhas(lexemasDoCodigo){
 // Retorna o próximo lexema símbolo presente na linha do código de acordo com a linha e posição do termo analisado:
 function proximoSimbolo(termoPos, linhasPos){
     return (linhas[linhasPos].conteudo[(termoPos+1)] != null) ? linhas[linhasPos].conteudo[(termoPos+1)] : linhas[linhasPos].conteudo[(termoPos-2)]
-}
-function qtdParenteses(linha){
-    let qtd
-    console.log(linha);
-    linha.forEach(termo =>{
-        if(termo == '(' || termo == ')'){
-            qtd ++
-        }
-    })
-    return (qtd%2==0) ? true : false
 }
 // Vai analisar como a expressão se parece e fazer chamadas para as funçãos respectivas da expressão:
 function expr(){
@@ -287,7 +278,9 @@ function fator(token){
     }else if(proximoSimbolo(linhaTemosPos, linhaAtual).token == "<parantese_D>"){
         // Caso seja (A + B) * (C + D):
         if(proximoSimbolo(linhaTemosPos+1, linhaAtual).lexema != ';'){
-            // caminhoExpLinha.push(proximoSimbolo(linhaTemosPos+1, linhaAtual).token)
+            if(proximoSimbolo(linhaTemosPos+1, linhaAtual).lexema != ")"){
+                caminhoExpLinha.push(proximoSimbolo(linhaTemosPos+1, linhaAtual).token)
+            }
             linhaTemosPos+=3
             expr()
         }
@@ -333,6 +326,17 @@ function arvoreParse(subArvore){
         erro(`Problema na função ArvoreParse`)
     }
 }
+function eDuplaExp(subArvore){
+    let cont = 0 
+    subArvore.map(termo =>{
+        if(termo == '(<expr>)'){
+            cont++
+        }
+    })
+    if(cont>1){
+        proximaExp++
+    }
+}
 export function mostrarArvoreParse(arvoreParseConteudo, arg){
     console.log(linhas);
     // Reinicia a árvore a cada clicar do botão RUN:
@@ -362,7 +366,6 @@ export function mostrarArvoreParse(arvoreParseConteudo, arg){
                 const div7 = document.createElement('div')
                 const div8 = document.createElement('div')
                 const div9 = document.createElement('div')
-                const div10 = document.createElement('div')
                 divTerciaria.className = 'columPrincipal'
                 div4.className = 'colum'
                 div7.className = 'inRow'
@@ -374,6 +377,7 @@ export function mostrarArvoreParse(arvoreParseConteudo, arg){
                     spanPrincipal.className = 'raiz1 caminhos'
                     parser.appendChild(spanPrincipal)
                 }else{
+                    eDuplaExp(subArvore)
                     // Percorre a subArvore fornecida pelo map:
                     for(let i=0; i<subArvore.length;i++){
                         // A cada iteração é criado um span que irá conter uma raíz ou galhos e folhas:
@@ -408,15 +412,24 @@ export function mostrarArvoreParse(arvoreParseConteudo, arg){
                             }
                         }
                         // Em análise - (Caso seja uma raiz de 5° grau):
+                        // Verificar se na linha existem duas (<expr>), se sim rodar o if para add o vertice principal:
                         else if(subArvore[i] == "(<expr>)"){
-                            if(proximaExp == 1){
+                            if(proximaExp== 0 || proximaExp == 1){
                                 span.innerText = subArvore[i]
                                 span.className = 'raiz5 caminhos'
                                 div9.appendChild(span)
                                 div9.appendChild(estruturaTerminal(subArvore, i+1))
-                                proximaExp++
+                                if(proximaExp>0){
+                                    proximaExp++
+                                }
                                 div7.appendChild(div9)
                             }else if(proximaExp == 2){
+                                if(eVertice(subArvore[i-1])){
+                                    const vertice = document.createElement('span')
+                                    vertice.innerText = subArvore[i-1]
+                                    vertice.className = 'vertice caminhos'
+                                    div7.appendChild(vertice)
+                                }
                                 span.innerText = subArvore[i]
                                 span.className = 'raiz5 caminhos'
                                 div8.appendChild(span)
@@ -436,6 +449,9 @@ export function mostrarArvoreParse(arvoreParseConteudo, arg){
                     }
                     // Ao fim do análise de cada subArvore é adicionada no DOM e vai para a árvore seguinte:
                     parser.appendChild(divPrincipal)
+                }
+                if(proximaExp != 0){
+                    proximaExp = 0
                 }
             })
         }
@@ -482,23 +498,14 @@ function estruturaTerminal(subArvore, pos){
                     span.className = 'caminhos'
                     span.innerText = subArvore[i]
                     div3.appendChild(span)
+                    if(eNumero(subArvore[i]) || eId(subArvore[i])){
+                        break
+                    }
             }
             div.appendChild(div3)
         }
         // retorna o container:
         return div
-}
-function estruturaRaiz(subArvore, pos){
-    const span = document.createElement('span')
-    const divContainer = document.createElement('div')
-    let divterminais = document.createElement('div')
-    divContainer.className = 'colum'
-    span.innerText = subArvore[pos]
-    span.className = 'raiz5 caminhos'
-    divterminais = estruturaTerminal(subArvore, pos+1)
-    divContainer.appendChild(span)
-    divContainer.appendChild(divterminais)
-    return divContainer
 }
 // Verifica se o valor recebido é um vértice ou não e retorna um boolean:
 export function eVertice(valor){
@@ -510,10 +517,15 @@ export function eVertice(valor){
 }
 // Verifica se o valor passado é uma raiz e retorna um boolean. (uma raiz possue um vértice após ela):
 function eRaiz(subArvore, posSubArv){
+    
     // Procura por um vértice, se houver ela é uma raíz:
     for(let i=posSubArv; i<subArvore.length; i++){
         if(eVertice(subArvore[i])){
-            return true
+            if(subArvore[i+1] == '(<expr>)' && proximaExp > 0){
+                return false
+            }else{
+                return true
+            }
         }
     }
     return false
