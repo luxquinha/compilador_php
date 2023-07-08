@@ -8,6 +8,8 @@ var caminhoExpLinha = []
 var arvore = ['<progr>']
 var linhas = []
 var termos = []
+let proximaExp = 1
+let expDupla = 2
 export function limparVariaveisGlobaissintatico(){
     linhaAtual = 1
     linhaTemosPos = 0 
@@ -16,6 +18,8 @@ export function limparVariaveisGlobaissintatico(){
     arvore = ['<progr>']
     linhas = []
     termos = []
+    proximaExp = 1
+    expDupla = 2
 }
 // =====================Análise sintática:===================================
 /* Gramática:
@@ -81,13 +85,23 @@ export function separarLinhas(lexemasDoCodigo){
     }else{
         expr()
         mostrarArvoreParse(arvore, '')
-        gerarCodigo(arvore)
+        console.log(arvore);
     }
 }
 /*Funções responsáveis por saber quantas linhas e quais o conteúdos de cada linha - (Fim) */
 // Retorna o próximo lexema símbolo presente na linha do código de acordo com a linha e posição do termo analisado:
 function proximoSimbolo(termoPos, linhasPos){
     return (linhas[linhasPos].conteudo[(termoPos+1)] != null) ? linhas[linhasPos].conteudo[(termoPos+1)] : linhas[linhasPos].conteudo[(termoPos-2)]
+}
+function qtdParenteses(linha){
+    let qtd
+    console.log(linha);
+    linha.forEach(termo =>{
+        if(termo == '(' || termo == ')'){
+            qtd ++
+        }
+    })
+    return (qtd%2==0) ? true : false
 }
 // Vai analisar como a expressão se parece e fazer chamadas para as funçãos respectivas da expressão:
 function expr(){
@@ -112,7 +126,7 @@ function expr(){
         // chama a função atribuição() enviando o token analisado como parametro:
         atribuição(getToken(linhaAtual, linhaTemosPos))
     }
-    // expr -> <imprimir> ou expr -> <fator> {(*|/)(expr)}
+    // expr -> <imprimir> ou expr -> <fator> {(*|/)(expr)} ou expr -> (expr)(+|-|*|/)(expr)
     else if(proximoSimbolo(linhaTemosPos, linhaAtual).lexema == '(' || getToken(linhaAtual, linhaTemosPos).lexema == "("){
         // Se o próximo símbolo for uma string então chama a função imprimir():
         if(proximoSimbolo(linhaTemosPos+1, linhaAtual).token == "<string>"
@@ -122,6 +136,10 @@ function expr(){
             }
             // chama a função imprimir() enviando o token analisado como parametro:
             imprimir(getToken(linhaAtual, linhaTemosPos))
+        }else if(getToken(linhaAtual, linhaTemosPos).lexema == "(" && expDupla == linhaTemosPos){
+            caminhoExpLinha.push(`<expr>`)
+            expDupla++
+            expr()
         }
         // Caso seja uma (<expr>):
         else{
@@ -179,7 +197,7 @@ function String(token){
         caminhoExpLinha.push(`${proximoSimbolo(linhaTemosPos, linhaAtual).token}`)
         if(proximoSimbolo(linhaTemosPos+1, linhaAtual).lexema == "("){
             linhaTemosPos+=2
-            expr(getToken(linhaAtual, linhaTemosPos))
+            expr()
         }else{
             linhaTemosPos+=2
             termo(getToken(linhaAtual, linhaTemosPos))
@@ -199,13 +217,17 @@ function termo(token){
             if(proximoSimbolo(linhaTemosPos, linhaAtual).lexema == '.'
             ||proximoSimbolo(linhaTemosPos+1, linhaAtual).token == '<string>'){
                 caminhoExpLinha.push(`(<termo>)`)
+                fator(token)
+            }else if(proximoSimbolo(linhaTemosPos, linhaAtual).token == '<op_multiplica>'
+            || proximoSimbolo(linhaTemosPos, linhaAtual).token == '<op_divide>'){
+                fator(token)
             }
             // Fator comum:
             else{
                 caminhoExpLinha.push(`<termo>`)
+                fator(token)
             }
             // Chama fator que incrementa para o proximo termo:
-            fator(token)
         }else{
             // Caso seja uma impressão:
             if(proximoSimbolo(linhaTemosPos, linhaAtual).lexema == '.'
@@ -265,6 +287,7 @@ function fator(token){
     }else if(proximoSimbolo(linhaTemosPos, linhaAtual).token == "<parantese_D>"){
         // Caso seja (A + B) * (C + D):
         if(proximoSimbolo(linhaTemosPos+1, linhaAtual).lexema != ';'){
+            // caminhoExpLinha.push(proximoSimbolo(linhaTemosPos+1, linhaAtual).token)
             linhaTemosPos+=3
             expr()
         }
@@ -275,7 +298,11 @@ function fator(token){
         if(proximoSimbolo(linhaTemosPos, linhaAtual).lexema== "+"
         || proximoSimbolo(linhaTemosPos, linhaAtual).lexema == '-'){
             linhaTemosPos+=2
-            termo(getToken(linhaAtual, linhaTemosPos))
+            if(getToken(linhaAtual, linhaTemosPos).lexema != "("){
+                termo(getToken(linhaAtual, linhaTemosPos))
+            }else{
+                expr()
+            }
         }
         // Caso seja uma multiplicação de fatores ou fator * (<expr>):
         else if(proximoSimbolo(linhaTemosPos, linhaAtual).lexema== "*"
@@ -307,6 +334,7 @@ function arvoreParse(subArvore){
     }
 }
 export function mostrarArvoreParse(arvoreParseConteudo, arg){
+    console.log(linhas);
     // Reinicia a árvore a cada clicar do botão RUN:
     if(arg == "limparArvore"){
         parser.removeChild(corpoArvoreParser)
@@ -333,6 +361,8 @@ export function mostrarArvoreParse(arvoreParseConteudo, arg){
                 const div6 = document.createElement('div')
                 const div7 = document.createElement('div')
                 const div8 = document.createElement('div')
+                const div9 = document.createElement('div')
+                const div10 = document.createElement('div')
                 divTerciaria.className = 'columPrincipal'
                 div4.className = 'colum'
                 div7.className = 'inRow'
@@ -370,17 +400,30 @@ export function mostrarArvoreParse(arvoreParseConteudo, arg){
                             span.className = 'raiz4 caminhos'
                             div6.appendChild(span)
                             // adiciona uma div terminal em div6 no interior da div5:
-                            div7.appendChild(estruturaTerminal(subArvore, i+1))
-                            div6.appendChild(div7)
-                            div5.appendChild(div6)
-                            div4.appendChild(div5)
+                            if(subArvore[i+1] == '<termo>' || subArvore[i+1] == '<fator>' || subArvore[i+1] == '<string>'){
+                                div7.appendChild(estruturaTerminal(subArvore, i+1))
+                                div6.appendChild(div7)
+                                div5.appendChild(div6)
+                                div4.appendChild(div5)
+                            }
                         }
                         // Em análise - (Caso seja uma raiz de 5° grau):
                         else if(subArvore[i] == "(<expr>)"){
-                            span.innerText = subArvore[i]
-                            span.className = 'raiz5 caminhos'
-                            div8.appendChild(span)
-                            div8.appendChild(estruturaTerminal(subArvore, i+1))
+                            if(proximaExp == 1){
+                                span.innerText = subArvore[i]
+                                span.className = 'raiz5 caminhos'
+                                div9.appendChild(span)
+                                div9.appendChild(estruturaTerminal(subArvore, i+1))
+                                proximaExp++
+                                div7.appendChild(div9)
+                            }else if(proximaExp == 2){
+                                span.innerText = subArvore[i]
+                                span.className = 'raiz5 caminhos'
+                                div8.appendChild(span)
+                                div8.appendChild(estruturaTerminal(subArvore, i+1))
+                            }
+                            // div9.appendChild(div10)
+                            // div8.appendChild(div9)
                             div7.appendChild(div8)
                             div6.appendChild(div7)
                             div5.appendChild(div6)
@@ -401,49 +444,61 @@ export function mostrarArvoreParse(arvoreParseConteudo, arg){
 // Função que retorna uma estrutura terminal já formada para mostrarArvoreParser():
 // recebe como parâmetros a subArvore e a posição de onde ela foi chamada:
 function estruturaTerminal(subArvore, pos){
-    // Cria elementos html para o LE e LD e o container que vai guardar elas duas:
-    const div = document.createElement('div')
-    const div2 = document.createElement('div')
-    const div3 = document.createElement('div')
-    div2.className = 'colum'
-    div3.className = 'colum'
-    div.className = 'inRow'
-    let posicaoAtual = pos
-    // Percorre a partir da posição em que foi chamada e vai adicionando os caminhos na div LE até achar um vértice:
-    for(let i=pos; i<subArvore.length; i++){
-        if(!eVertice(subArvore[i])){
-            const span = document.createElement('span')
-            span.className = 'caminhos'
-            span.innerText = subArvore[i]
-            div2.appendChild(span)
-            posicaoAtual = i
-        }else{
-            posicaoAtual = i
-            break
-        }
-    }
-    // Adiciona no container
-    div.appendChild(div2)
-    // Adiciona o vértice no container:
-    if(eVertice(subArvore[posicaoAtual])){
-        const span = document.createElement('span')
-        span.className = 'vertice caminhos'
-        span.innerText = subArvore[posicaoAtual]
-        div.appendChild(span)
-        posicaoAtual++
-    }
-    // Caso seja uma atribuição simples ele ja adiciona os elemento <div> <vertice> <div>:
-    if(!eRaiz(subArvore, posicaoAtual)){
-        for(let i=posicaoAtual; i<subArvore.length; i++){
+        // Cria elementos html para o LE e LD e o container que vai guardar elas duas:
+        const div = document.createElement('div')
+        const div2 = document.createElement('div')
+        const div3 = document.createElement('div')
+        div2.className = 'colum'
+        div3.className = 'colum'
+        div.className = 'inRow'
+        let posicaoAtual = pos
+        // Percorre a partir da posição em que foi chamada e vai adicionando os caminhos na div LE até achar um vértice:
+        for(let i=pos; i<subArvore.length; i++){
+            if(!eVertice(subArvore[i])){
                 const span = document.createElement('span')
                 span.className = 'caminhos'
                 span.innerText = subArvore[i]
-                div3.appendChild(span)
+                div2.appendChild(span)
+                posicaoAtual = i
+            }else{
+                posicaoAtual = i
+                break
+            }
         }
-        div.appendChild(div3)
-    }
-    // retorna o container:
-    return div
+        // Adiciona no container
+        div.appendChild(div2)
+        // Adiciona o vértice no container:
+        if(eVertice(subArvore[posicaoAtual])){
+            const span = document.createElement('span')
+            span.className = 'vertice caminhos'
+            span.innerText = subArvore[posicaoAtual]
+            div.appendChild(span)
+            posicaoAtual++
+        }
+        // Caso seja uma atribuição simples ele ja adiciona os elemento <div> <vertice> <div>:
+        if(!eRaiz(subArvore, posicaoAtual)){
+            for(let i=posicaoAtual; i<subArvore.length; i++){
+                    const span = document.createElement('span')
+                    span.className = 'caminhos'
+                    span.innerText = subArvore[i]
+                    div3.appendChild(span)
+            }
+            div.appendChild(div3)
+        }
+        // retorna o container:
+        return div
+}
+function estruturaRaiz(subArvore, pos){
+    const span = document.createElement('span')
+    const divContainer = document.createElement('div')
+    let divterminais = document.createElement('div')
+    divContainer.className = 'colum'
+    span.innerText = subArvore[pos]
+    span.className = 'raiz5 caminhos'
+    divterminais = estruturaTerminal(subArvore, pos+1)
+    divContainer.appendChild(span)
+    divContainer.appendChild(divterminais)
+    return divContainer
 }
 // Verifica se o valor recebido é um vértice ou não e retorna um boolean:
 export function eVertice(valor){
