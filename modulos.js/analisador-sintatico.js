@@ -86,13 +86,17 @@ export function separarLinhas(lexemasDoCodigo){
     }else{
         expr()
         mostrarArvoreParse(arvore, '')
-        console.log(arvore);
+        gerarCodigo(arvore)
     }
 }
 /*Funções responsáveis por saber quantas linhas e quais o conteúdos de cada linha - (Fim) */
 // Retorna o próximo lexema símbolo presente na linha do código de acordo com a linha e posição do termo analisado:
 function proximoSimbolo(termoPos, linhasPos){
-    return (linhas[linhasPos].conteudo[(termoPos+1)] != null) ? linhas[linhasPos].conteudo[(termoPos+1)] : linhas[linhasPos].conteudo[(termoPos-2)]
+    if(linhas[linhasPos] != null){
+        return (linhas[linhasPos].conteudo[(termoPos+1)] != null) ? linhas[linhasPos].conteudo[(termoPos+1)] : linhas[linhasPos].conteudo[(termoPos-2)]
+    }else{
+        return null
+    }
 }
 // Vai analisar como a expressão se parece e fazer chamadas para as funçãos respectivas da expressão:
 function expr(){
@@ -168,6 +172,7 @@ function expr(){
 function proximaLinha(){
     linhaAtual++
     linhaTemosPos = 0
+    expDupla = 2
     if(caminhoExpLinha.length > 0){
         arvoreParse(caminhoExpLinha)
         caminhoExpLinha = []
@@ -338,7 +343,6 @@ function eDuplaExp(subArvore){
     }
 }
 export function mostrarArvoreParse(arvoreParseConteudo, arg){
-    console.log(linhas);
     // Reinicia a árvore a cada clicar do botão RUN:
     if(arg == "limparArvore"){
         parser.removeChild(corpoArvoreParser)
@@ -493,13 +497,18 @@ function estruturaTerminal(subArvore, pos){
         }
         // Caso seja uma atribuição simples ele ja adiciona os elemento <div> <vertice> <div>:
         if(!eRaiz(subArvore, posicaoAtual)){
+            let identificadores = /(\$[a-z\_\-]{1,}[0-9]?)/i
             for(let i=posicaoAtual; i<subArvore.length; i++){
-                    const span = document.createElement('span')
-                    span.className = 'caminhos'
-                    span.innerText = subArvore[i]
-                    div3.appendChild(span)
-                    if(eNumero(subArvore[i]) || eId(subArvore[i])){
+                    if(eVertice(proximoSimbolo(linhaTemosPos, linhaAtual))){
                         break
+                    }else{
+                        const span = document.createElement('span')
+                        span.className = 'caminhos'
+                        span.innerText = subArvore[i]
+                        div3.appendChild(span)
+                        if(eNumero(subArvore[i]) || identificadores.test(subArvore[i])){
+                            break
+                        }
                     }
             }
             div.appendChild(div3)

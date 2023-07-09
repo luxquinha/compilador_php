@@ -3,6 +3,7 @@ import { erro } from "../main.js"
 import { eVertice } from "./analisador-sintatico.js";
 
 var variaveisDoCodigo = []
+let contador = 1
 
 export function gerarCodigo(linhasDeCodigo){
     console.log(linhasDeCodigo);
@@ -17,6 +18,7 @@ export function gerarCodigo(linhasDeCodigo){
 }
 export function limparVariaveisGlobaisGerador(){
     variaveisDoCodigo = []
+    contador = 1
 }
 class Variavel{
     constructor(){
@@ -26,12 +28,14 @@ class Variavel{
     }
 }
 function traduzirAcao(linha){
+    console.log(`Linha ${contador}`);
     let resultado = new Variavel()
     if(linha[1] == '<atribuição>'){
         resultado.nomeVariavel = linha[3]
         resultado.valor = verificarValorNumerico(linha, 5)
         resultado.tipo = typeof resultado.valor
         variaveisDoCodigo.push(resultado)
+        contador++
     }
 }
 function verificarValorNumerico(linha, posicaoValor){
@@ -67,7 +71,6 @@ function verificarValorNumerico(linha, posicaoValor){
             return numero
         }
     }
-    
 }
 function pegarId(nomeDoId){
     let valor = 0
@@ -101,19 +104,93 @@ export function eId(valor){
 function proximoSimbolo(linha, posicaoAtual){
     return (linha[posicaoAtual+1] != null) ? linha[posicaoAtual+1] : linha[posicaoAtual-1]
 }
+function duplaExp(linha){
+    let qtdExp = 0
+    linha.map(termos =>{
+        if(termos == "(<expr>)"){
+            qtdExp++
+        }
+    })
+    return (qtdExp > 1) ? true : false
+}
+function ePrimeiraExp(linha, pos){
+    let qtdExp = 0
+    for(let i=pos; i>=0; i--){
+        if(linha[i]=='(<expr>)'){
+            qtdExp++
+        }
+    }
+    return (qtdExp==1) ? true : false
+}
 function operacaoSoma(linha, posicaoAtual, primeiroValor){
     for(let i=posicaoAtual; i<(linha.length);i++){
         if(eNumero(linha[i])){
             let numero = Number(linha[i])
-            primeiroValor+=numero
-            if(!eVertice(proximoSimbolo(linha, i))){
+            if(!eVertice(proximoSimbolo(linha, i)) && proximoSimbolo(linha, i+1) != "(<expr>)"){
+                primeiroValor+=numero
                 return primeiroValor
+            }else{
+                if(duplaExp(linha) && ePrimeiraExp(linha, i)){
+                    numero+=primeiroValor
+                    let valorExpressao2
+                    if(proximoSimbolo(linha,i) == '<op_soma>'){
+                        valorExpressao2 = operacaoSoma(linha, i+2, numero)
+                    }else if(proximoSimbolo(linha,i) == '<op_subtração>'){
+                        valorExpressao2 = operacaoSub(linha, i+2, numero)
+                    }else if(proximoSimbolo(linha,i) == '<op_multiplica>'){
+                        valorExpressao2 = operacaoMult(linha, i+2, numero)
+                    }else if(proximoSimbolo(linha,i) == '<op_divide>'){
+                        valorExpressao2 = operacaoDiv(linha, i+2, numero)
+                    }
+                    return valorExpressao2
+                }else{
+                    let valorExpressao
+                    if(proximoSimbolo(linha,i) == '<op_soma>'){
+                        valorExpressao = operacaoSoma(linha, i+2, numero)
+                    }else if(proximoSimbolo(linha,i) == '<op_subtração>'){
+                        valorExpressao = operacaoSub(linha, i+2, numero)
+                    }else if(proximoSimbolo(linha,i) == '<op_multiplica>'){
+                        valorExpressao = operacaoMult(linha, i+2, numero)
+                    }else if(proximoSimbolo(linha,i) == '<op_divide>'){
+                        valorExpressao = operacaoDiv(linha, i+2, numero)
+                    }
+                    primeiroValor+=valorExpressao
+                    return primeiroValor
+                }
             }
         }else if(eId(linha[i])){
             let valorResultante = pegarId(linha[i])
-            primeiroValor+=valorResultante
-            if(!eVertice(proximoSimbolo(linha,i))){
+            if(!eVertice(proximoSimbolo(linha,i)) && proximoSimbolo(linha, i+1) != "(<expr>)"){
+                primeiroValor+=valorResultante
                 return primeiroValor 
+            }else{
+                if(duplaExp(linha) && ePrimeiraExp(linha, i)){
+                    valorResultante+=primeiroValor
+                    let valorExpressao2
+                    if(proximoSimbolo(linha,i) == '<op_soma>'){
+                        valorExpressao2 = operacaoSoma(linha, i+2, valorResultante)
+                    }else if(proximoSimbolo(linha,i) == '<op_subtração>'){
+                        valorExpressao2 = operacaoSub(linha, i+2, valorResultante)
+                    }else if(proximoSimbolo(linha,i) == '<op_multiplica>'){
+                        valorExpressao2 = operacaoMult(linha, i+2, valorResultante)
+                    }else if(proximoSimbolo(linha,i) == '<op_divide>'){
+                        valorExpressao2 = operacaoDiv(linha, i+2, valorResultante)
+                    }
+                    return valorExpressao2
+                }else{
+                    let valorExpressao
+                    if(proximoSimbolo(linha,i) == '<op_soma>'){
+                        valorExpressao = operacaoSoma(linha, i+2, valorResultante)
+                    }else if(proximoSimbolo(linha,i) == '<op_subtração>'){
+                        valorExpressao = operacaoSub(linha, i+2, valorResultante)
+                    }else if(proximoSimbolo(linha,i) == '<op_multiplica>'){
+                        valorExpressao = operacaoMult(linha, i+2, valorResultante)
+                    }else if(proximoSimbolo(linha,i) == '<op_divide>'){
+                        valorExpressao = operacaoDiv(linha, i+2, valorResultante)
+                    }
+                    primeiroValor+=valorExpressao
+                    return primeiroValor
+                }
             }
         }
     }
@@ -122,122 +199,217 @@ function operacaoSub(linha, posicaoAtual, primeiroValor){
     for(let i=posicaoAtual; i<(linha.length);i++){
         if(eNumero(linha[i])){
             let numero = Number(linha[i])
-            primeiroValor-=numero
-            if(!eVertice(proximoSimbolo(linha, i))){
+            if(!eVertice(proximoSimbolo(linha, i)) && proximoSimbolo(linha, i) != "(<expr>)"){
+                primeiroValor-=numero
                 return primeiroValor
+            }else{
+                if(duplaExp(linha) && ePrimeiraExp(linha, i)){
+                    numero = primeiroValor - numero
+                    let valorExpressao2
+                    if(proximoSimbolo(linha,i) == '<op_soma>'){
+                        valorExpressao2 = operacaoSoma(linha, i+2, numero)
+                    }else if(proximoSimbolo(linha,i) == '<op_subtração>'){
+                        valorExpressao2 = operacaoSub(linha, i+2, numero)
+                    }else if(proximoSimbolo(linha,i) == '<op_multiplica>'){
+                        valorExpressao2 = operacaoMult(linha, i+2, numero)
+                    }else if(proximoSimbolo(linha,i) == '<op_divide>'){
+                        valorExpressao2 = operacaoDiv(linha, i+2, numero)
+                    }
+                    return valorExpressao2
+                }else{
+                    let valorExpressao
+                    if(proximoSimbolo(linha,i) == '<op_soma>'){
+                        valorExpressao = operacaoSoma(linha, i+2, numero)
+                    }else if(proximoSimbolo(linha,i) == '<op_subtração>'){
+                        valorExpressao = operacaoSub(linha, i+2, numero)
+                    }else if(proximoSimbolo(linha,i) == '<op_multiplica>'){
+                        valorExpressao = operacaoMult(linha, i+2, numero)
+                    }else if(proximoSimbolo(linha,i) == '<op_divide>'){
+                        valorExpressao = operacaoDiv(linha, i+2, numero)
+                    }
+                    primeiroValor-=valorExpressao
+                    return primeiroValor
+                }
             }
         }else if(eId(linha[i])){
             let valorResultante = pegarId(linha[i])
-            primeiroValor-=valorResultante
-            if(!eVertice(proximoSimbolo(linha,i))){
+            if(!eVertice(proximoSimbolo(linha,i)) && proximoSimbolo(linha, i) != "(<expr>)"){
+                primeiroValor-=valorResultante
                 return primeiroValor 
+            }else{
+                if(duplaExp(linha) && ePrimeiraExp(linha, i)){
+                    valorResultante = primeiroValor - valorResultante
+                    let valorExpressao2
+                    if(proximoSimbolo(linha,i) == '<op_soma>'){
+                        valorExpressao2 = operacaoSoma(linha, i+2, valorResultante)
+                    }else if(proximoSimbolo(linha,i) == '<op_subtração>'){
+                        valorExpressao2 = operacaoSub(linha, i+2, valorResultante)
+                    }else if(proximoSimbolo(linha,i) == '<op_multiplica>'){
+                        valorExpressao2 = operacaoMult(linha, i+2, valorResultante)
+                    }else if(proximoSimbolo(linha,i) == '<op_divide>'){
+                        valorExpressao2 = operacaoDiv(linha, i+2, valorResultante)
+                    }
+                    return valorExpressao2
+                }else{
+                    let valorExpressao
+                    if(proximoSimbolo(linha,i) == '<op_soma>'){
+                        valorExpressao = operacaoSoma(linha, i+2, valorResultante)
+                    }else if(proximoSimbolo(linha,i) == '<op_subtração>'){
+                        valorExpressao = operacaoSub(linha, i+2, valorResultante)
+                    }else if(proximoSimbolo(linha,i) == '<op_multiplica>'){
+                        valorExpressao = operacaoMult(linha, i+2, valorResultante)
+                    }else if(proximoSimbolo(linha,i) == '<op_divide>'){
+                        valorExpressao = operacaoDiv(linha, i+2, valorResultante)
+                    }
+                    primeiroValor-=valorExpressao
+                    return primeiroValor
+                }
             }
         }
     }
 }
 function operacaoMult(linha, posicaoAtual, primeiroValor){
-    if(linha[posicaoAtual] == '(<expr>)'){
-        for(let i=posicaoAtual; i<(linha.length);i++){
-            if(eNumero(linha[i])){
-                let numero = Number(linha[i])
-                if(eVertice(proximoSimbolo(linha, i))){
-                    if(proximoSimbolo(linha,i) == '<op_soma>'){
-                        numero = operacaoSoma(linha, i+2, numero)
-                    }else if(proximoSimbolo(linha,i) == '<op_subtração>'){
-                        numero = operacaoSub(linha, i+2, numero)
-                    }else if(proximoSimbolo(linha,i) == '<op_multiplica>'){
-                        numero = operacaoMult(linha, i+2, numero)
-                    }else if(proximoSimbolo(linha,i) == '<op_divide>'){
-                        numero = operacaoDiv(linha, i+2, numero)
-                    }
-                    primeiroValor*=numero
-                    return primeiroValor
-                }
-            }else if(eId(linha[i])){
-                let valorResultante = pegarId(linha[i])
-                if(eVertice(proximoSimbolo(linha, i))){
-                    if(proximoSimbolo(linha,i) == '<op_soma>'){
-                        valorResultante = operacaoSoma(linha, i+2, valorResultante)
-                    }else if(proximoSimbolo(linha,i) == '<op_subtração>'){
-                        valorResultante = operacaoSub(linha, i+2, valorResultante)
-                    }else if(proximoSimbolo(linha,i) == '<op_multiplica>'){
-                        valorResultante = operacaoMult(linha, i+2, valorResultante)
-                    }else if(proximoSimbolo(linha,i) == '<op_divide>'){
-                        valorResultante = operacaoDiv(linha, i+2, valorResultante)
-                    }
-                    primeiroValor*=valorResultante
-                    return primeiroValor
-                }
-            }
-        }
-    }else{
-        for(let i=posicaoAtual; i<(linha.length);i++){
-            if(eNumero(linha[i])){
-                let numero = Number(linha[i])
+    for(let i=posicaoAtual; i<(linha.length);i++){
+        if(eNumero(linha[i])){
+            let numero = Number(linha[i])
+            if(!eVertice(proximoSimbolo(linha, i)) && proximoSimbolo(linha, i) != "(<expr>)"){
                 primeiroValor*=numero
-                if(!eVertice(proximoSimbolo(linha, i))){
+                return primeiroValor
+            }else{
+                if(duplaExp(linha) && ePrimeiraExp(linha, i)){
+                    numero *= primeiroValor
+                    let valorExpressao2
+                    if(proximoSimbolo(linha,i) == '<op_soma>'){
+                        valorExpressao2 = operacaoSoma(linha, i+2, numero)
+                    }else if(proximoSimbolo(linha,i) == '<op_subtração>'){
+                        valorExpressao2 = operacaoSub(linha, i+2, numero)
+                    }else if(proximoSimbolo(linha,i) == '<op_multiplica>'){
+                        valorExpressao2 = operacaoMult(linha, i+2, numero)
+                    }else if(proximoSimbolo(linha,i) == '<op_divide>'){
+                        valorExpressao2 = operacaoDiv(linha, i+2, numero)
+                    }
+                    return valorExpressao2
+                }else{
+                    let valorExpressao
+                    if(proximoSimbolo(linha,i) == '<op_soma>'){
+                        valorExpressao = operacaoSoma(linha, i+2, numero)
+                    }else if(proximoSimbolo(linha,i) == '<op_subtração>'){
+                        valorExpressao = operacaoSub(linha, i+2, numero)
+                    }else if(proximoSimbolo(linha,i) == '<op_multiplica>'){
+                        valorExpressao = operacaoMult(linha, i+2, numero)
+                    }else if(proximoSimbolo(linha,i) == '<op_divide>'){
+                        valorExpressao = operacaoDiv(linha, i+2, numero)
+                    }
+                    primeiroValor*=valorExpressao
                     return primeiroValor
                 }
-            }else if(eId(linha[i])){
-                let valorResultante = pegarId(linha[i])
+            }
+        }else if(eId(linha[i])){
+            let valorResultante = pegarId(linha[i])
+            if(!eVertice(proximoSimbolo(linha,i)) && proximoSimbolo(linha, i) != "(<expr>)"){
                 primeiroValor*=valorResultante
-                if(!eVertice(proximoSimbolo(linha,i))){
-                    return primeiroValor 
+                return primeiroValor 
+            }else{
+                if(duplaExp(linha) && ePrimeiraExp(linha, i)){
+                    valorResultante *= primeiroValor
+                    let valorExpressao2
+                    if(proximoSimbolo(linha,i) == '<op_soma>'){
+                        valorExpressao2 = operacaoSoma(linha, i+2, valorResultante)
+                    }else if(proximoSimbolo(linha,i) == '<op_subtração>'){
+                        valorExpressao2 = operacaoSub(linha, i+2, valorResultante)
+                    }else if(proximoSimbolo(linha,i) == '<op_multiplica>'){
+                        valorExpressao2 = operacaoMult(linha, i+2, valorResultante)
+                    }else if(proximoSimbolo(linha,i) == '<op_divide>'){
+                        valorExpressao2 = operacaoDiv(linha, i+2, valorResultante)
+                    }
+                    return valorExpressao2
+                }else{
+                    let valorExpressao
+                    if(proximoSimbolo(linha,i) == '<op_soma>'){
+                        valorExpressao = operacaoSoma(linha, i+2, valorResultante)
+                    }else if(proximoSimbolo(linha,i) == '<op_subtração>'){
+                        valorExpressao = operacaoSub(linha, i+2, valorResultante)
+                    }else if(proximoSimbolo(linha,i) == '<op_multiplica>'){
+                        valorExpressao = operacaoMult(linha, i+2, valorResultante)
+                    }else if(proximoSimbolo(linha,i) == '<op_divide>'){
+                        valorExpressao = operacaoDiv(linha, i+2, valorResultante)
+                    }
+                    primeiroValor*=valorExpressao
+                    return primeiroValor
                 }
             }
+        
         }
     }
 }
 function operacaoDiv(linha, posicaoAtual, primeiroValor){
-    if(linha[posicaoAtual] == '(<expr>)'){
-        for(let i=posicaoAtual; i<(linha.length);i++){
-            if(eNumero(linha[i])){
-                let numero = Number(linha[i])
-                if(eVertice(proximoSimbolo(linha, i))){
+    for(let i=posicaoAtual; i<(linha.length);i++){
+        if(eNumero(linha[i])){
+            let numero = Number(linha[i])
+            if(!eVertice(proximoSimbolo(linha, i)) && proximoSimbolo(linha, i) != "(<expr>)"){
+                primeiroValor/=numero
+                return primeiroValor
+            }else{
+                if(duplaExp(linha) && ePrimeiraExp(linha, i)){
+                    numero = primeiroValor/numero
+                    let valorExpressao2
                     if(proximoSimbolo(linha,i) == '<op_soma>'){
-                        numero = operacaoSoma(linha, i+2, numero)
+                        valorExpressao2 = operacaoSoma(linha, i+2, numero)
                     }else if(proximoSimbolo(linha,i) == '<op_subtração>'){
-                        numero = operacaoSub(linha, i+2, numero)
+                        valorExpressao2 = operacaoSub(linha, i+2, numero)
                     }else if(proximoSimbolo(linha,i) == '<op_multiplica>'){
-                        numero = operacaoMult(linha, i+2, numero)
+                        valorExpressao2 = operacaoMult(linha, i+2, numero)
                     }else if(proximoSimbolo(linha,i) == '<op_divide>'){
-                        numero = operacaoDiv(linha, i+2, numero)
+                        valorExpressao2 = operacaoDiv(linha, i+2, numero)
                     }
-                    primeiroValor/=numero
-                    return primeiroValor
-                }
-            }else if(eId(linha[i])){
-                let valorResultante = pegarId(linha[i])
-                if(eVertice(proximoSimbolo(linha, i))){
+                    return valorExpressao2
+                }else{
+                    let valorExpressao
                     if(proximoSimbolo(linha,i) == '<op_soma>'){
-                        valorResultante = operacaoSoma(linha, i+2, valorResultante)
+                        valorExpressao = operacaoSoma(linha, i+2, numero)
                     }else if(proximoSimbolo(linha,i) == '<op_subtração>'){
-                        valorResultante = operacaoSub(linha, i+2, valorResultante)
+                        valorExpressao = operacaoSub(linha, i+2, numero)
                     }else if(proximoSimbolo(linha,i) == '<op_multiplica>'){
-                        valorResultante = operacaoMult(linha, i+2, valorResultante)
+                        valorExpressao = operacaoMult(linha, i+2, numero)
                     }else if(proximoSimbolo(linha,i) == '<op_divide>'){
-                        valorResultante = operacaoDiv(linha, i+2, valorResultante)
+                        valorExpressao = operacaoDiv(linha, i+2, numero)
                     }
-                    primeiroValor/=valorResultante
+                    primeiroValor/=valorExpressao
                     return primeiroValor
                 }
             }
-        }
-    }else{
-        for(let i=posicaoAtual; i<(linha.length);i++){
-            if(eNumero(linha[i])){
-                let numero = Number(linha[i])
-                primeiroValor/=numero
-                if(!eVertice(proximoSimbolo(linha, i))){
-                    return primeiroValor
-                }else{
-                    
-                }
-            }else if(eId(linha[i])){
-                let valorResultante = pegarId(linha[i])
+        }else if(eId(linha[i])){
+            let valorResultante = pegarId(linha[i])
+            if(!eVertice(proximoSimbolo(linha, i)) && proximoSimbolo(linha, i) != "(<expr>)"){
                 primeiroValor/=valorResultante
-                if(!eVertice(proximoSimbolo(linha,i))){
-                    return primeiroValor 
+                return primeiroValor
+            }else{
+                if(duplaExp(linha) && ePrimeiraExp(linha, i)){
+                    valorResultante = primeiroValor/valorResultante
+                    let valorExpressao2
+                    if(proximoSimbolo(linha,i) == '<op_soma>'){
+                        valorExpressao2 = operacaoSoma(linha, i+2, valorResultante)
+                    }else if(proximoSimbolo(linha,i) == '<op_subtração>'){
+                        valorExpressao2 = operacaoSub(linha, i+2, valorResultante)
+                    }else if(proximoSimbolo(linha,i) == '<op_multiplica>'){
+                        valorExpressao2 = operacaoMult(linha, i+2, valorResultante)
+                    }else if(proximoSimbolo(linha,i) == '<op_divide>'){
+                        valorExpressao2 = operacaoDiv(linha, i+2, valorResultante)
+                    }
+                    return valorExpressao2
+                }else{
+                    let valorExpressao
+                    if(proximoSimbolo(linha,i) == '<op_soma>'){
+                        valorExpressao = operacaoSoma(linha, i+2, valorResultante)
+                    }else if(proximoSimbolo(linha,i) == '<op_subtração>'){
+                        valorExpressao = operacaoSub(linha, i+2, valorResultante)
+                    }else if(proximoSimbolo(linha,i) == '<op_multiplica>'){
+                        valorExpressao = operacaoMult(linha, i+2, valorResultante)
+                    }else if(proximoSimbolo(linha,i) == '<op_divide>'){
+                        valorExpressao = operacaoDiv(linha, i+2, valorResultante)
+                    }
+                    primeiroValor/=valorExpressao
+                    return primeiroValor
                 }
             }
         }
