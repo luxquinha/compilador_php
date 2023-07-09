@@ -2,6 +2,7 @@
 Seja bem-vindo ao nosso pequeno projeto de um compilador PHP, esse projeto foi criado para 
 a disciplina de Paradigmas de linguagens de programação, como trabalho de conclusão da matéria,
 a seguir estão as instruções para o uso desse compilador:
+_Para uma melhor leitura do README.md acesse [github] (https://github.com/luxquinha/compilador.git)_
 
 ## Estrutura da página:
 A aplicação começa no menu _Terminal_, no qual está com o fundo diferente, para mostrar em qual 
