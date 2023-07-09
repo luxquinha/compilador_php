@@ -1,3 +1,4 @@
+// Comunicação entre a main e os módulos:
 import { lex, limparVariaveisGlobaisLex } from "./modulos.js/analisador-lex.js"
 import {mostrarArvoreParse , limparVariaveisGlobaissintatico} from "./modulos.js/analisador-sintatico.js"
 import { limparVariaveisGlobaisGerador } from "./modulos.js/gerador_de_codigo.js"
@@ -14,9 +15,12 @@ const titulo = document.querySelector("#titulo_da_pagina")
 // Possiveis saidas pro usuário:
 const tokens = document.querySelector("#tabelaSimbolos")
 export const saidas = document.querySelector("#saidas")
-const parser = document.querySelector("#parser")
+export const parser = document.querySelector("#parser")
+// Instanciando os botões do DOM:
 const executar = document.querySelector("#btn-run")
 const limpar = document.querySelector("#clear")
+// Array que guarda todos os erros da compilação:
+var erroCompilacao = []
 // =====================Eventos=======================================
 // Mudar informações de acordo com a página:
 pag1.addEventListener('click', ()=>{
@@ -40,6 +44,7 @@ pag3.addEventListener('click', ()=>{
     pag3.setAttribute("id", "paginaAtual")
     mostrarTabela()
 })
+// Para a página já começar com o terminal ativo:
 pag1.click()
 // Anular a ação do tab no DOM e gerar um espaçamento na textArea:
 textArea.addEventListener('keydown', function(e) {
@@ -70,15 +75,18 @@ arquivo.addEventListener('change', function(e){
         leitor.readAsText(codigo)
     }
 })
-// Cada click do botão as variavéis são reiniciadas:
+// Cada click do botão as variavéis são reiniciadas e é chamada a analise léxica do código:
 executar.addEventListener('click', ()=>{
     if(textArea.value !== ''){
         reiniciarVariaveisGlobais()
+        // Reinicia a tabela e a árvore parser:
         addTabela("limparTabela", null)
         mostrarArvoreParse(null, 'limparArvore')
     }
+    // Chama lex enviando o código bruto como parâmetro:
     lex(textArea.value)
 })
+// Ao clicar no botão é chamada a função clearCode():
 limpar.addEventListener('click', ()=>{
     clearCode()
 })
@@ -86,10 +94,12 @@ limpar.addEventListener('click', ()=>{
 function clearCode(){
     window.location.reload()
 }
+// Chama as funções limpar de cada página e reinicia os seus valores:
 function reiniciarVariaveisGlobais(){
     limparVariaveisGlobaisLex()
     limparVariaveisGlobaissintatico()
     limparVariaveisGlobaisGerador()
+    erroCompilacao = []
 }
 // =====================Funções dos menus===================================
 function mostrarCompilador(){
@@ -117,6 +127,7 @@ export function addTabela(arg, lexemas){
     }else{
         const tbody = document.createElement("tbody")
         tbody.id = "corpoTabela"
+        // Percorre todos os lexemas e adiciona uma linha para cada com suas informações respectivas:
         lexemas.map(lexema =>{
             // Criando os elementos html:
             const tr = document.createElement("tr")
@@ -142,7 +153,51 @@ export function addTabela(arg, lexemas){
     }
 }
 // /imprime os erros do código em questão:
-export function erro(tipoError){
-    console.log(tipoError);
-    saidas.innerHTML = tipoError
+export function erro(tipoError, arg){
+    if(arg == 'add'){
+        let mensagem = tipoError
+        erroCompilacao.push(mensagem)
+    }else if(arg == 'mostrar'){
+        if(erroCompilacao.length > 0){
+            erroCompilacao.map(erro =>{
+                saidas.appendChild(addError(erro))
+            })
+            return true
+        }
+        else{
+            saidas.appendChild(addError(''))
+            return false
+        }
+    }else{
+        return (erroCompilacao.length>0) ? true : false
+    }
+}
+// Cria uma mensagem de sucesso ou de error e retorna pro DOM:
+function addError(erro){
+    const divPrincipal = document.createElement('div')
+    const divIcone = document.createElement('div')
+    const mensagem = document.createElement('span')
+    const negrito = document.createElement('strong')
+    if(erro != ''){
+        divIcone.innerHTML += `<svg xmlns="http://www.w3.org/2000/svg" width="23" height="23" fill="currentColor" class="bi bi-x-circle-fill" viewBox="0 0 16 16">
+        <path d="M16 8A8 8 0 1 1 0 8a8 8 0 0 1 16 0zM5.354 4.646a.5.5 0 1 0-.708.708L7.293 8l-2.647 2.646a.5.5 0 0 0 .708.708L8 8.707l2.646 2.647a.5.5 0 0 0 .708-.708L8.707 8l2.647-2.646a.5.5 0 0 0-.708-.708L8 7.293 5.354 4.646z"/>
+        </svg>`
+        negrito.innerText = 'Error'
+        divIcone.appendChild(negrito)
+        divIcone.className = 'error'
+        mensagem.innerText = erro
+        divPrincipal.className = 'erroMensagem'
+    }else{
+        divIcone.innerHTML += `<svg xmlns="http://www.w3.org/2000/svg" width="23" height="23" fill="currentColor" class="bi bi-check-circle-fill" viewBox="0 0 16 16">
+        <path d="M16 8A8 8 0 1 1 0 8a8 8 0 0 1 16 0zm-3.97-3.03a.75.75 0 0 0-1.08.022L7.477 9.417 5.384 7.323a.75.75 0 0 0-1.06 1.06L6.97 11.03a.75.75 0 0 0 1.079-.02l3.992-4.99a.75.75 0 0 0-.01-1.05z"/>
+        </svg>`
+        negrito.innerText = 'Sucesso'
+        divIcone.appendChild(negrito)
+        divIcone.className = 'sucesso'
+        mensagem.innerText = 'Seu código foi compilado com sucesso!'
+        divPrincipal.className = 'sucessoMensagem'
+    }
+    divPrincipal.appendChild(divIcone)
+    divPrincipal.appendChild(mensagem)
+    return divPrincipal
 }

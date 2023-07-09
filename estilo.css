@@ -154,6 +154,9 @@
     width: 100%;
     height: 100%;
 }
+#carregando{
+    justify-content: space-between;
+}
 /* Conteudo 2° Coluna: (Fim) */
 /* Atributos adicionados dinâmicamente: */
 .hide{
@@ -166,6 +169,48 @@
     display: flex;
     justify-content: space-between;
     width: 100%;
+}
+.sucessoMensagem{
+    display: flex;
+    flex-direction: row;
+    padding: 8px;
+    height: 3rem;
+    min-width: 7rem;
+    max-width: 40rem;
+    background-color: rgb(209, 248, 204);
+    border-left: 4px solid rgb(61, 216, 47);
+    color: rgb(10, 156, 5);
+    align-items: center;
+    margin-bottom: 10px;
+}
+.erroMensagem{
+    display: flex;
+    flex-direction: row;
+    padding: 8px;
+    height: 3rem;
+    min-width: 7rem;
+    max-width: 40rem;
+    background-color: rgb(248, 204, 204);
+    border-left: 4px solid rgb(245, 68, 68);
+    color: rgb(136, 10, 10);
+    align-items: center;
+    margin-bottom: 10px;
+}
+.sucesso{
+    display: flex;
+    flex-direction: row;
+    width: 5.5rem;
+    justify-content: space-between;
+    align-items: center;
+    margin-right: 10px;
+}
+.error{
+    display: flex;
+    flex-direction: row;
+    width: 4rem;
+    justify-content: space-between;
+    align-items: center;
+    margin-right: 10px;
 }
 /* Colorações das raizes: */
 .caminhos{
@@ -208,6 +253,7 @@
     color: #e10b6f;
     text-align: center;
 }
+/* Classes para as estruturação das árvores parser: */
 .columPrincipal{
     display: flex;
     flex-direction: column;

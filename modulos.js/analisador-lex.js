@@ -1,3 +1,4 @@
+// Importação de funções para comunicação dos módulos
 import { addTabela , erro } from "../main.js"
 import { separarLinhas } from "./analisador-sintatico.js"
 // Variaveis responsaveis pela separação dos lexemas e guardar os lexemas:
@@ -6,6 +7,7 @@ var qtd_aspas = 1
 var strings = []
 var posicaoDaString = 0
 var lexemas = []
+// Exporta a função para ser inicializada sempre que o botão RUN for clicado:
 export function limparVariaveisGlobaisLex(){
     sequencia = ''
     qtd_aspas = 1
@@ -45,6 +47,7 @@ function criarLexema(token, simbolo){
     } 
 
 }
+// Guarda as strings do código em strings[]:
 function pegarStrings(codigo){
     let isString = /('(\s?[a-z ]{2,}[+-\/*]?[à-ú]?([:!\.=,]{1,})?){1,}')|("(\s?[a-z ]{2,}[+-\/*]?[à-ú]?([:!\.=,]{1,})?){1,}")/gi
     let stringDoCodigo = []
@@ -53,6 +56,7 @@ function pegarStrings(codigo){
         return stringDoCodigo
 }
 // recebe o codigo digitado, transforma em string e guarda os lexemas do código em um array:
+// Em seguida, após a análise léxica ele chama a função do analisador sintático:
 export function lex(textArea){
     if(textArea == ""){
         alert("Nenhum código encontrado. Por favor verifique seu editor!")
@@ -66,6 +70,7 @@ export function lex(textArea){
         separarLinhas(lexemas)
     }
 }
+// Retira as strings do código para criar lexemas com seus valores:
 function tirarStings_doCodigo(codigo){
     if(strings != null){
         strings.forEach(frase =>{
@@ -122,6 +127,7 @@ function identificarLexemas(sentenca){
     }
     addTabela('', lexemas)
 }
+// Cria os tokens de acordo com o caractere passado de identificarLexemas():
 function gerarTokens(simbolo){
     let identificadores = /\$([a-z\_\-]{1,}[0-9]?)/i
     let int_literal = /^[0-9]{1,}/
@@ -180,6 +186,6 @@ function gerarTokens(simbolo){
     }else if(palavra.test(simbolo) && simbolo != "<php" && simbolo != "echo"){
         criarLexema("<indefinido>", simbolo)
         let erroEspecifico = `A palavra:'${simbolo}' não está definida`
-        erro(erroEspecifico)
+        erro(erroEspecifico, 'add')
     }
 }

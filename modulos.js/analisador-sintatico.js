@@ -1,6 +1,6 @@
-import { erro } from "../main.js"
-import { gerarCodigo, eNumero, eId } from "./gerador_de_codigo.js"
-
+// Importando funções de outros módulos:
+import { erro, parser } from "../main.js"
+import { gerarCodigo, eNumero } from "./gerador_de_codigo.js"
 // Variaveis globais do analisador sintático:
 var linhaAtual = 1
 var linhaTemosPos = 0 
@@ -11,6 +11,7 @@ var linhas = []
 var termos = []
 let proximaExp = 0
 let expDupla = 2
+// Exporta a função para ser inicializada sempre que o botão RUN for clicado:
 export function limparVariaveisGlobaissintatico(){
     linhaAtual = 1
     linhaTemosPos = 0 
@@ -23,26 +24,6 @@ export function limparVariaveisGlobaissintatico(){
     expDupla = 2
 }
 // =====================Análise sintática:===================================
-/* Gramática:
-    <php ?> -> <expr>; { expr;}
-
-    <atribuição> -> id "=" <termo>
-
-    <imprimir> -> echo "(<imprimir>)" (<termo>) 
-
-    <expr> -> <atribuição> 
-    | <imprimir> 
-    | <termo> {(+|-)<termo>} 
-    | <fator> * (<expr>)
-
-    <termo> -> <fator> {(*|/)<termo>}
-    | <string>
-
-    <fator> -> id [. <termo>]
-    | (<expr>)
-
-    <string> -> id [.<termo>]
-*/
 /*Funções responsáveis por saber quantas linhas e quais o conteúdos de cada linha - (inicio) */
 // Retorna um objeto linha:
 function addLinha(conteudoDaLinha){
@@ -80,14 +61,12 @@ export function separarLinhas(lexemasDoCodigo){
     })
     // Verifica se o código começa e termina com as tags corretas, se sim então chamamos exp():
     if(linhas[(linhas.length-1)].conteudo.token !== "<fim_app>"){
-        erro(`Esperado "?>" para finalizar o programa`)
+        erro(`Esperado "?>" para finalizar o programa`, 'add')
     }else if(linhas[0].conteudo.token !== "<inicio_app>"){
-        erro(`Esperado "<php" para iniciar o programa`)
-    }else{
-        expr()
-        mostrarArvoreParse(arvore, '')
-        gerarCodigo(arvore)
+        erro(`Esperado "<php" para iniciar o programa`, 'add')
     }
+    expr()
+    gerarCodigo(arvore)
 }
 /*Funções responsáveis por saber quantas linhas e quais o conteúdos de cada linha - (Fim) */
 // Retorna o próximo lexema símbolo presente na linha do código de acordo com a linha e posição do termo analisado:
@@ -147,7 +126,7 @@ function expr(){
                 linhaTemosPos++
                 termo(getToken(linhaAtual, linhaTemosPos))
             }else{
-                erro(`Esperado ")" na linha ${linhaAtual+1}`)
+                erro(`Esperado ")" na linha ${linhaAtual+1}`, 'add')
             }
         }
     } 
@@ -249,7 +228,7 @@ function imprimir(token){
     // Se houver os dois parenteses a função continua com as chamadas recurssivas, se não para:
     if(proximoSimbolo(linhaTemosPos, linhaAtual).token == "<string>"
     || proximoSimbolo(linhaTemosPos, linhaAtual).token == "<id>"){
-        erro(`Esperado "(" na linha ${linhaAtual+1}`)
+        erro(`Esperado "(" na linha ${linhaAtual+1}`, 'add')
         // Verificar os parenteses e chamar o termo que está dentro da função echo:
     }else if(proximoSimbolo(linhaTemosPos, linhaAtual).token == "<parantese_E>"){
         let tamanho = linhas[linhaAtual].quantidadeTermos
@@ -257,7 +236,7 @@ function imprimir(token){
             linhaTemosPos+=2
             termo(getToken(linhaAtual, linhaTemosPos))
         }else{
-            erro(`Esperado ")" na linha ${linhaAtual+1}`)
+            erro(`Esperado ")" na linha ${linhaAtual+1}`, 'add')
         }
     }
 }
@@ -329,9 +308,10 @@ function arvoreParse(subArvore){
     if(subArvore != null){
         arvore.push(subArvore)
     }else{
-        erro(`Problema na função ArvoreParse`)
+        erro(`Problema na função ArvoreParse`, 'add')
     }
 }
+// Verifica se a linha possui mais de uma (<expr>):
 function eDuplaExp(subArvore){
     let cont = 0 
     subArvore.map(termo =>{
@@ -343,9 +323,10 @@ function eDuplaExp(subArvore){
         proximaExp++
     }
 }
+// Insere elementos no DOM formando a árvore parser:
 export function mostrarArvoreParse(arvoreParseConteudo, arg){
     // Reinicia a árvore a cada clicar do botão RUN:
-    if(arg == "limparArvore"){
+    if(arg == "limparArvore" && erro('', '')){
         parser.removeChild(corpoArvoreParser)
         parser.removeChild(programa)
     }else{
