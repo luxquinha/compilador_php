@@ -3,13 +3,13 @@ import { separarLinhas } from "./analisador-sintatico.js"
 // Variaveis responsaveis pela separação dos lexemas e guardar os lexemas:
 var sequencia = ''
 var qtd_aspas = 1
-var string = []
+var strings = []
 var posicaoDaString = 0
 var lexemas = []
 export function limparVariaveisGlobaisLex(){
     sequencia = ''
     qtd_aspas = 1
-    string = []
+    strings = []
     posicaoDaString = 0
     lexemas = []
 }
@@ -33,7 +33,7 @@ function criarLexema(token, simbolo){
     }else if(token == '<string>'){
         if((qtd_aspas%2)!=0){
             let frase = new Token()
-            frase.lexema = string[posicaoDaString] 
+            frase.lexema = strings[posicaoDaString]
             frase.pos = lexemas.length
             frase.token = '<string>'
             lexemas.push(frase)
@@ -46,11 +46,11 @@ function criarLexema(token, simbolo){
 
 }
 function pegarStrings(codigo){
-    let isString = /('(\s?[a-z ]{3,}[à-ú]?([:!\.,]{1,})?){1,}')|("(\s?[a-z ]{3,}[à-ú]?([:!\.,]{1,})?){1,}")/gi
-    let string = []
-    string = codigo.match(isString)
-    if(string != null)
-        return string
+    let isString = /('(\s?[a-z ]{2,}[+-\/*]?[à-ú]?([:!\.=,]{1,})?){1,}')|("(\s?[a-z ]{2,}[+-\/*]?[à-ú]?([:!\.=,]{1,})?){1,}")/gi
+    let stringDoCodigo = []
+    stringDoCodigo = codigo.match(isString)
+    if(stringDoCodigo != null)
+        return stringDoCodigo
 }
 // recebe o codigo digitado, transforma em string e guarda os lexemas do código em um array:
 export function lex(textArea){
@@ -59,8 +59,7 @@ export function lex(textArea){
     }else{
         let codigo = textArea
         codigo = prepararString(codigo)
-        // saidas.innerText = codigo
-        string = pegarStrings(codigo)
+        strings = pegarStrings(codigo)
         codigo = tirarStings_doCodigo(codigo)
         identificarLexemas(codigo)
         // Funções do analisador sintático:
@@ -68,8 +67,8 @@ export function lex(textArea){
     }
 }
 function tirarStings_doCodigo(codigo){
-    if(string != null){
-        string.forEach(frase =>{
+    if(strings != null){
+        strings.forEach(frase =>{
             if(frase.startsWith('"')){
                 frase = frase.replaceAll('"', '')
             }else{

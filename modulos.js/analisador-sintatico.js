@@ -125,7 +125,7 @@ function expr(){
     else if(proximoSimbolo(linhaTemosPos, linhaAtual).lexema == '(' || getToken(linhaAtual, linhaTemosPos).lexema == "("){
         // Se o próximo símbolo for uma string então chama a função imprimir():
         if(proximoSimbolo(linhaTemosPos+1, linhaAtual).token == "<string>"
-        || (proximoSimbolo(linhaTemosPos+1, linhaAtual).token == "<id>" && proximoSimbolo(linhaTemosPos+2, linhaAtual).lexema == ".")){
+        || (proximoSimbolo(linhaTemosPos+1, linhaAtual).token == "<id>")){
             if(linhaTemosPos != 0){
                 caminhoExpLinha.push(`<expr>`)
             }
@@ -211,7 +211,8 @@ function termo(token){
         if(token.token != "<string>"){
             // Caso seja uma concatenação de impressão:
             if(proximoSimbolo(linhaTemosPos, linhaAtual).lexema == '.'
-            ||proximoSimbolo(linhaTemosPos+1, linhaAtual).token == '<string>'){
+            ||proximoSimbolo(linhaTemosPos+1, linhaAtual).token == '<string>'
+            ||proximoSimbolo(linhaTemosPos+1, linhaAtual).lexema == ')'){
                 caminhoExpLinha.push(`(<termo>)`)
                 fator(token)
             }else if(proximoSimbolo(linhaTemosPos, linhaAtual).token == '<op_multiplica>'
